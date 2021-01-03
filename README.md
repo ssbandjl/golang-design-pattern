@@ -1,4 +1,4 @@
-# Golang的23种设计模式之代码示例+示例图解+设计模式资料
+# Golang的23种设计模式之代码示例+图解+设计模式资料
 
 [![Build Status](https://travis-ci.org/senghoo/golang-design-pattern.svg?branch=master)](https://travis-ci.org/senghoo/golang-design-pattern)
 
