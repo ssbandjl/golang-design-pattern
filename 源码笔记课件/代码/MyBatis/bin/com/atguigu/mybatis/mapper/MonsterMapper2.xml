@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.atguigu.mybatis.mapper.MonsterMapper2">
+	<!-- 实现 addMonster -->
+	<insert id="addMonster" parameterType="monster2">
+		INSERT INTO mybatis_monster2 (user_name,user_email) VALUES(#{username}, #{useremail})
+	</insert>
+	<!-- 实现 findAllMonster【使用别名 屏蔽属性名和字段名不一致 1.可以用，但是复用性不ok 2. 】 -->
+	<!-- <select id="findAllMonster" resultType="Monster2">
+		SELECT monster_id,user_name AS username, user_email AS useremail FROM mybatis_monster2
+	</select> -->
+	<!-- 实现 findAllMonster【resultmap 屏蔽属性名和字段名不一致 1.复用性好,高大上  】 -->
+	<!-- 
+		1. resultMap 表示我们定义一个结果映射
+		2. type="Monster2" 返回的真正的数据类型还是 Monster2对象
+		3. id="findAllMonsterMap", 给 resultMap  取名
+		4. column="user_name"  表中的字段
+		5. property="username" 表示对象的属性
+	 -->
+	<resultMap type="Monster2" id="findAllMonsterMap">
+		<result column="user_name" property="username"/>
+		<result column="user_email" property="useremail"/>
+	</resultMap>
+	<select id="findAllMonster" resultMap="findAllMonsterMap" >
+		SELECT * FROM mybatis_monster2
+	</select>
+</mapper>

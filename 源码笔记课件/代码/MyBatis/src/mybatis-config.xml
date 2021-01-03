@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<!-- 这里就是引入jdbc.properties文件 -->
+	
+	<properties resource="jdbc.properties"></properties>
+	<typeAliases>
+		<!-- 如果一个包下有很多的类，我们可以直接给包取别名，这样
+			该包下面的所有类名，就可以直接使用
+		 -->
+		 <package name="com.atguigu.mybatis.entity"/>
+		
+		<!-- <typeAlias type="com.itbull.mybatis.entity.Monster" 
+		  alias="Monster"/> -->
+	</typeAliases>
+	
+	<environments default="development">
+
+		<!-- 配置我们mybatis的环境 -->
+		<environment id="development">
+			
+			<!-- mybatis使用事务管理器是jdbc直连方式 -->
+			<transactionManager type="JDBC" />
+			<!-- 配置我们的数据源  -->
+			<dataSource type="POOLED">
+				<property name="driver" value="${jdbc.driver}" />
+				<property name="url" value="${jdbc.url}" />
+				<property name="username" value="${jdbc.user}" />
+				<property name="password" value="${jdbc.password}" />
+			</dataSource>
+		</environment>
+	</environments>
+	<mappers>
+		<!-- 这里会引入(注册)我们的 Mapper.xml文件 -->
+		<!-- <mapper resource="com/itbull/mybatis/mapper/MonsterMapper.xml"/> -->
+		<!-- 当一个包下有很多的Mapper.xml文件和基于注解实现的接口时，为了方便，我们可以以包方式进行注册
+			将下面的所有xml文件和注解接口 都进行注册
+		 -->
+		<package name="com.atguigu.mybatis.mapper"/>
+	
+		<!-- 如果我们有直接通过注解来实现的接口，可以这样注册到mybatsi框架中 -->
+		<!-- <mapper class="com.atguigu.mybatis.mapper.MonsterAnnotation"/> -->
+		
+	</mappers>
+</configuration>

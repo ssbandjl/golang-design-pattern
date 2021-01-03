@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- mapper:表示一个映射器
+	1. namespace="com.atguigu.mybatis.mapper.MonsterMapper"
+		说明本mapper.xml文件是用来 映射管理 MonsterMapper接口
+		,主要是去实现MonsterMapper接口声明方法
+	2. select: 实现一个查询操作  insert:表示一个添加操作
+	3. id="addMonster" 表示 MonsterMapper接口 的方法名
+	4. resultType="xx" 返回的结果类型，如果没有就不需要写
+	5. parameterType="com.atguigu.mybatis.entity.Monster" 表示该方法输入的参数类型
+	6. (age,birthday,email,gender,name,salary) 表的字段名
+	7. #{age},#{birthday},#{email},#{gender},#{name},#{salary} 是实体类Monster的属性名
+  -->
+<mapper namespace="com.atguigu.mybatis.mapper.MonsterMapper">
+	<!-- 配置我们的添加方法，获取到刚刚加入的monster对象的id 
+		1. useGeneratedKeys="true" 表示要返回刚刚添加的对象的主键值
+		2. keyProperty="monster_id" 表示返回的刚刚添加的对象的主键值，set到monster_id 属性
+	-->
+	<insert id="addMonster" parameterType="Monster"
+		useGeneratedKeys="true" keyProperty="monster_id"
+	>
+		INSERT INTO mybatis_monster_ (age,birthday,email,gender,name,salary) 
+		VALUES(#{age},#{birthday},#{email},#{gender},#{name},#{salary})
+	</insert>
+	<!-- 实现delMonster方法 
+		注意 parameterType="Integer" 如果是Java本身的数据类型直接写类名即可
+	-->
+	<delete id="delMonster" parameterType="Integer">
+		DELETE FROM mybatis_monster_  
+		WHERE monster_id=#{monster_id}
+	</delete>
+	
+	<!-- 实现updateMonster方法 -->
+	<update id="updateMonster" parameterType="Monster">
+		UPDATE mybatis_monster_ SET age=#{age}, birthday=#{birthday}, email = #{email},
+		gender= #{gender}, name=#{name}, salary=#{salary} WHERE monster_id=#{monster_id}
+	</update>
+	
+	<!-- 实现getMonsterById方法 -->
+	<select id="getMonsterById" parameterType="Integer" 
+		resultType="Monster">
+		SELECT * FROM mybatis_monster_ 
+		WHERE monster_id = #{monster_id}
+	</select>
+	
+	<!-- 实现findAllMonster -->
+	<select id="findAllMonster" 
+		resultType="Monster">
+		SELECT * FROM mybatis_monster_ 
+	</select>
+	
+	<!-- 实现findMonsterByNameORId -->
+	<select id="findMonsterByNameORId" parameterType="Monster" 
+		resultType="Monster">
+		SELECT  * FROM mybatis_monster_ 
+		WHERE monster_id=#{monster_id} OR name=#{name}
+	</select>
+	
+	<!-- 看看模糊查询的使用 取值 需要 ${value} 取值-->
+	<select id="findMonsterByName" 
+		parameterType="String" resultType="Monster">
+		SELECT  * FROM mybatis_monster_ 
+		WHERE name LIKE '%${value}%'
+	</select>
+	
+	<!-- 实现findMonsterByIdAndSalary_PrameterHashMap -->
+	<select id="findMonsterByIdAndSalary_PrameterHashMap" 
+		parameterType="map" resultType="Monster">
+		SELECT * FROM mybatis_monster_ 
+		WHERE monster_id > #{monster_id} AND salary > #{salary}
+	</select>
+	
+	<!-- 实现findMonsterByIdAndSalary_PrameterHashMap_ReturnHashMap
+		传入的参数和返回的参数都是HashMap
+	 -->
+	 <select id="findMonsterByIdAndSalary_PrameterHashMap_ReturnHashMap" parameterType="map"
+	 	resultType="map"
+	 >
+	 	SELECT monster_id,name FROM mybatis_monster_ 
+		WHERE monster_id > #{monster_id} AND salary > #{salary}
+	 </select>
+	
+	<!-- 实现findMonsterByAge -->
+	<select id="findMonsterByAge" resultType="Monster" 
+		parameterType="Integer">
+		SELECT * FROM mybatis_monster_  WHERE 1=1
+		<if test="age > 0">
+			AND age > #{age}
+		</if>
+	</select>
+	
+	<!-- 实现 findMonsterByIdAndName 【where 和 if】 -->
+	<select id="findMonsterByIdAndName" parameterType="Monster" resultType="Monster">
+		SELECT * FROM mybatis_monster_ 
+		<!-- 使用where标签开始拼接 
+			where 标签的好处是1. 会自动的加入where子句.
+			mybatis会自动的去掉多余的AND
+		-->
+		<where>
+			<if test="monster_id > 0">
+				AND monster_id > #{monster_id}
+			</if>
+			<if test="name != null and name != ''">
+				AND name = #{name}
+			</if>
+		</where>
+	</select>
+	
+</mapper>

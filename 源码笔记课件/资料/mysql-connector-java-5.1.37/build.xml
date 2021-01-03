@@ -1,0 +1,1888 @@
+<?xml version='1.0'?>
+<!--
+  Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+
+  The MySQL Connector/J is licensed under the terms of the GPLv2
+  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
+  There are special exceptions to the terms and conditions of the GPLv2 as it is applied to
+  this software, see the FOSS License Exception
+  <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+
+  This program is free software; you can redistribute it and/or modify it under the terms
+  of the GNU General Public License as published by the Free Software Foundation; version 2
+  of the License.
+
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License along with this
+  program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
+  Floor, Boston, MA 02110-1301  USA
+
+-->
+<project name="MySQL Connector/J" default="dist" basedir=".">
+    <description>
+Compiling Connector/J
+=====================
+
+Connector/J 5.1 supports both JDBC 3 and JDBC 4+ with a single code base. This requires JDBC 3 classes to be compiled with Java 5 and JDBC 4+ to be compiled
+with Java 8.
+The variables 'com.mysql.jdbc.jdk5' and 'com.mysql.jdbc.jdk8' are used to find the respective compilers when building the driver. Side by side
+with these, the variable 'com.mysql.jdbc.extra.libs' must point to the location of third-party libraries that we don't distribute and are required for
+compiling.
+Compiling all JDBC 4+ code with Java 8 alone produces some warnings since JDBC 4.0 and JDBC 4.1 classes don't require a compliler higher than Java 6. To get
+more precise results and avoid warnings use the property 'com.mysql.jdbc.jre6.rtjar' to point to the Java 6 'rt.jar' library (usually in 'jre/lib/rt.jar').
+Further details can be found in http://dev.mysql.com/doc/connector-j/en/connector-j-installing-source.html.
+
+Targets: "dist", "full-dist", "package", "full-package", "full-package-no-sources", "compile", "install"
+
+
+Testing Connector/J
+===================
+
+Connector/J 5.1 ships with an extensive test suite that can be run simply by providing a MySQL JDBC URL in the variable 'com.mysql.jdbc.testsuite.url' and by
+calling the target "test". If nothing more is set, these tests run with the JVMs referred in the variables 'com.mysql.jdbc.jdk5' and 'com.mysql.jdbc.jdk8' for
+JDBC 3 and JDBC 4+ related tests respectively. Alternatively, all tests can be run with a single JVM, provided that it is pointed out in the variable
+'com.mysql.jdbc.testsuite.jvm'.
+Running the full test suite with different JVMs and different MySQL servers at once is also possible. The variables 'com.mysql.jdbc.testsuite.jvm' and
+'com.mysql.jdbc.testsuite.url' can be suffixed with an index ".1" to ".9" to indicate the multiple alternatives which results in the matrix of all possible
+combinations. The target "test-multijvm" must be called in this case.
+Running only one test set is possible by setting the variable 'test' with the class' fully qualified name. If also a comma separated list of test names is
+provided in the variable 'methods', then only these will be executed.
+
+Targets: "test", "test-multijvm"
+
+
+Compliance, coverage and instrumentation
+========================================
+
+This file ships with targets for these matters. Further details can be found in the respective targets.
+
+
+MySQL Fabric support and testing
+================================
+
+Support for MySQL Fabric connections is seamlessly included in Connector/J, so when the driver is compiled it already includes all the required classes for it.
+Testing MySQL Fabric support can be done by setting specific variables and running the respective targets. Further details can be found in the last targets in
+this file.
+
+
+Sample 'build.properties' that can be used to compile, build, test and test with multi JVMs
+===========================================================================================
+~~~start cut here~~~
+# Basic settings for 'compile', 'test', 'test-multijvm' and targets that depend on these.
+
+# External libraries needed for both compiling and testing:
+# - Further details in http://dev.mysql.com/doc/connector-j/en/connector-j-installing-source.html
+# - Mandatory.
+com.mysql.jdbc.extra.libs=&lt;full_path_to_connector-j-jardeps&gt;
+
+# JDKs needed for compiling:
+# - Must point to JDK home directories.
+# - Also used for testing if 'com.mysql.jdbc.testsuite.jvm' is not provided.
+# - Mandatory.
+com.mysql.jdbc.jdk5=&lt;full_path_to_jdk1.5&gt;
+com.mysql.jdbc.jdk8=&lt;full_path_to_jdk1.8&gt;
+
+# Java 6 runtime libraries for compiling JDBC 4.0 and JDBC 4.1 classes:
+# - Must point to the library 'jre/lib/rt.jar'.
+# - Optional. If not provided, Java 8 runtime is used in its place.
+com.mysql.jdbc.jre6.rtjar=&lt;full_path_to_jre1.6/lib/rt.jar&gt;
+
+# Single JVM/MySQL tests:
+# - Must point to JDK or JRE home directories.
+# - If not provided, JDBC 3 tests are run with 'com.mysql.jdbc.jdk5'.
+# - If not provided or pointing to a Java5 JVM, JDBC 4+(&lt;4.2) tests are run with 'com.mysql.jdbc.jdk8'.
+# - If not provided or pointing to a JVM lower than 8, JDBC 4.2 tests are run with 'com.mysql.jdbc.jdk8'.
+# - Optional.
+com.mysql.jdbc.testsuite.jvm=&lt;full_path_to_a_jdk_or_jre&gt;
+# - URL to the test database.
+# - Any of the current MySQL versions.
+# - Mandatory for 'test' target.
+com.mysql.jdbc.testsuite.url=jdbc:mysql://&lt;host&gt;:&lt;port&gt;/&lt;testDB&gt;?user=&lt;user&gt;&amp;password=&lt;pwd&gt;
+
+# Multiple JVM/MySQL tests:
+# - Must point to JDK or JRE home directories.
+# - If pointing to a Java5 JVM, JDBC 4+(&lt;4.2) tests are run with 'com.mysql.jdbc.jdk8' instead.
+# - If pointing to a JVM lower than 8, JDBC 4.2 tests are run with 'com.mysql.jdbc.jdk8'.
+# - Mandatory (at least one, at most eight) for 'test-multijdk' target.
+com.mysql.jdbc.testsuite.jvm.1=&lt;full_path_to_a_jdk_or_jre&gt;
+com.mysql.jdbc.testsuite.jvm.2=&lt;full_path_to_a_jdk_or_jre&gt;
+com.mysql.jdbc.testsuite.jvm.3=&lt;full_path_to_a_jdk_or_jre&gt;
+# - URL to the test database(s).
+# - Any of the current MySQL versions.
+# - Mandatory (at least one, at most eight) for 'test-multijdk' target.
+com.mysql.jdbc.testsuite.url.1=jdbc:mysql://&lt;host1&gt;:&lt;port1&gt;/&lt;testDB1&gt;?user=&lt;user1&gt;&amp;password=&lt;pwd1&gt;
+com.mysql.jdbc.testsuite.url.2=jdbc:mysql://&lt;host2&gt;:&lt;port2&gt;/&lt;testDB2&gt;?user=&lt;user2&gt;&amp;password=&lt;pwd2&gt;
+
+# Cancels re-compiling between successive test executions.
+# - Implicit in multiple JVM/MySQL in between iterations.
+# - Comment variable if not needed.
+# - Optional.
+com.mysql.jdbc.noCleanBetweenCompiles=yes
+
+# Other targets may require specific settings. Check 'build.xml' for details.
+~~~end cut here~~~
+    </description>
+
+
+    <!-- ******************** -->
+    <!-- ***** SETTINGS ***** -->
+    <!-- ******************** -->
+
+
+    <!-- If build.properties exists, import it. -->
+    <property file="build.properties" />
+
+    <property name="major_version" value="5" />
+    <property name="minor_version" value="1" />
+    <property name="subminor_version" value="37" />
+    <property name="version_status" value="" />
+
+    <property name="version" value="${major_version}.${minor_version}.${subminor_version}${version_status}" />
+    <property name="prodName" value="mysql-connector-java" />
+    <property name="prodDisplayName" value="MySQL Connector Java" />
+    <property name="snapshot.version" value="-SNAPSHOT" />
+    <property name="extra.version" value="" />
+    <property name="full.version" value="${version}${extra.version}${snapshot.version}" />
+    <property name="fullProdName" value="${prodName}-${full.version}" />
+    <property name="sourceDir" value="./src" />
+    <property name="buildDir" value="./build" />
+    <property name="distDir" value="./dist" />
+    <property name="junit.results" value="${buildDir}/junit" />
+    <property name="debug.enable" value="on" />
+    <property name="toPackage" value="${distDir}/toArchive" />
+    <property name="packageDest" value="${toPackage}/${fullProdName}" />
+
+    <!-- Send class files to correct location if running in eclipse. -->
+    <condition property="compiler.output" value="bin" else="${buildDir}/${fullProdName}">
+        <or>
+            <isset property="eclipse.running" />
+            <isset property="eclipse.pdebuild.home" />
+            <contains string="${ant.home}" substring="plugins" />
+        </or>
+    </condition>
+
+    <!-- The following properties are needed for finding JDK5 and JDK8 needed for compile and can be passed on the command line to ant via -D switches. -->
+    <property name="com.mysql.jdbc.jdk5" value="/usr/lib/jvm/jdk1.5" />
+    <property name="com.mysql.jdbc.jdk8" value="/usr/lib/jvm/jdk1.8" />
+
+    <!-- The following property allows to point the location of third-party libraries we don't distribute. Default value points to src/lib so user could either
+       put these jars there or pass different location via ant -D switch. -->
+    <property name="com.mysql.jdbc.extra.libs" value="${sourceDir}/lib" />
+
+    <!-- The following property is needed for finding a JVM to execute the tests and can be passed on the command line to ant via -D switch. -->
+    <property name="com.mysql.jdbc.testsuite.jvm" value="${com.mysql.jdbc.jdk5}" />
+
+    <!-- The following property is needed for building the docs and must be passed on the command line to ant via -D switch. -->
+    <property name="com.mysql.jdbc.docs.sourceDir" value="/tmp/connectorj/docs/prebuilt" />
+
+    <!-- The folloing propertyset is used to forward tests setup configurations as system variables to JUnit tasks. -->
+    <propertyset id="junit.system.properties">
+        <propertyref prefix="com.mysql.jdbc.test." />
+        <!-- Exclude 'testsuite' properties ending with '.url', '.url.N', '.jvm' or '.jvm.N'. -->
+        <propertyref regex="^com\.mysql\.jdbc\.testsuite\..*(?&lt;!(?:url|jvm)(?:\.\d)?)$" />
+    </propertyset>
+
+
+    <!-- Classpaths settings. -->
+    <path id="built.driver.only.classpath">
+        <pathelement location="${buildDir}/${fullProdName}" />
+    </path>
+
+    <path id="project.build.classpath">
+        <fileset dir="${com.mysql.jdbc.extra.libs}">
+            <include name="**/*.jar" />
+        </fileset>
+
+        <fileset dir="${buildDir}/${fullProdName}/lib">
+            <include name="**/*.jar" />
+        </fileset>
+
+        <pathelement location="${buildDir}/${fullProdName}" />
+    </path>
+
+
+    <!-- ************************* -->
+    <!-- ***** VERIFICATIONS ***** -->
+    <!-- ************************* -->
+
+
+    <!-- Check for required external libraries. -->
+    <target name="-extra-libs-check">
+        <fail message="The property 'com.mysql.jdbc.extra.libs' must point to a directory that contains the libraries required for build tasks.">
+            <condition>
+                <not>
+                    <available file="${com.mysql.jdbc.extra.libs}" type="dir" />
+                </not>
+            </condition>
+        </fail>
+        <fail message="Hibernate libraries, required for build tasks, must be in the directory '${com.mysql.jdbc.extra.libs}/hibernate4'.">
+            <condition>
+                <not>
+                    <available file="${com.mysql.jdbc.extra.libs}/hibernate4" type="dir" />
+                </not>
+            </condition>
+        </fail>
+    </target>
+
+
+    <!-- Check for required JDKs for compilation. -->
+    <target name="-compiler-check" depends="-jdk5-check, -jdk8-check, -jre6-rtjar-check" />
+
+
+    <!-- Check for required JDK5 for compilation of JDBC 3 implementation. -->
+    <target name="-jdk5-check">
+        <property name="com.mysql.jdbc.jdk5.java" value="${com.mysql.jdbc.jdk5}/bin/java" />
+        <property name="com.mysql.jdbc.jdk5.javac" value="${com.mysql.jdbc.jdk5}/bin/javac" />
+
+        <local name="com.mysql.jdbc.jdk5.version" />
+        <exec executable="${com.mysql.jdbc.jdk5.java}"
+              outputproperty="com.mysql.jdbc.jdk5.version"
+              failonerror="false"
+              failifexecutionfails="false"
+              resultproperty="jdk5checkexitstatus">
+            <arg value="-version" />
+        </exec>
+
+        <fail message="Java 5 is required. Set the full path to this JDK home with the property 'com.mysql.jdbc.jdk5'. Default: '/usr/lib/jvm/jdk1.5').
+Java 8 (for JDBC 4+ implementation) is also required. Set the full path to this JDK home with the property 'com.mysql.jdbc.jdk8'. Default: '/usr/lib/jvm/jdk1.8'.">
+            <condition>
+                <not>
+                    <and>
+                        <equals arg1="${jdk5checkexitstatus}" arg2="0" />
+                        <contains string="${com.mysql.jdbc.jdk5.version}" substring="java version &quot;1.5" casesensitive="true" />
+                    </and>
+                </not>
+            </condition>
+        </fail>
+    </target>
+
+
+    <!-- Check for required JDK8 for compilation of JDBC 4+ implementation. -->
+    <target name="-jdk8-check">
+        <property name="com.mysql.jdbc.jdk8.java" value="${com.mysql.jdbc.jdk8}/bin/java" />
+        <property name="com.mysql.jdbc.jdk8.javac" value="${com.mysql.jdbc.jdk8}/bin/javac" />
+
+        <local name="com.mysql.jdbc.jdk8.version" />
+        <exec executable="${com.mysql.jdbc.jdk8.java}"
+              outputproperty="com.mysql.jdbc.jdk8.version"
+              failonerror="false"
+              failifexecutionfails="false"
+              resultproperty="jdk8checkexitstatus">
+            <arg value="-version" />
+        </exec>
+
+        <fail message="Java 8 (for JDBC 4+ implementation) is required. Set the full path to this JDK home with the property 'com.mysql.jdbc.jdk8'. Default: '/usr/lib/jvm/jdk1.8'.">
+            <condition>
+                <not>
+                    <and>
+                        <equals arg1="${jdk8checkexitstatus}" arg2="0" />
+                        <contains string="${com.mysql.jdbc.jdk8.version}" substring="java version &quot;1.8" casesensitive="true" />
+                    </and>
+                </not>
+            </condition>
+        </fail>
+    </target>
+
+
+    <!-- Check for Java 6 runtime libraries for compilation of JDBC 4.0 and JDBC 4.1 implementations. Ignored if property is undefined. -->
+    <target name="-jre6-rtjar-check">
+        <fail message="Invalid or missing Java 6 runtime library pointed by 'com.mysql.jdbc.jre6.rtjar'. ">
+            <condition>
+                <and>
+                    <isset property="com.mysql.jdbc.jre6.rtjar" />
+                    <not>
+                        <available file="${com.mysql.jdbc.jre6.rtjar}" />
+                    </not>
+                </and>
+            </condition>
+        </fail>
+    </target>
+
+
+    <!-- Check provided URL for running unit tests. -->
+    <target name="-testsuite-url-check">
+        <condition property="com.mysql.jdbc.testsuite.url.final" value="${com.mysql.jdbc.testsuite.url.internal}" else="${com.mysql.jdbc.testsuite.url}">
+            <isset property="com.mysql.jdbc.testsuite.url.internal" />
+        </condition>
+
+        <fail message="Set the MySQL database connection string for the test suite in one of the properties, 'com.mysql.jdbc.testsuite.url' or 'com.mysql.jdbc.testsuite.url.N', according to desired target.">
+            <condition>
+                <not>
+                    <or>
+                        <isset property="com.mysql.jdbc.testsuite.url.internal" />
+                        <isset property="com.mysql.jdbc.testsuite.url" />
+                    </or>
+                </not>
+            </condition>
+        </fail>
+    </target>
+
+
+    <!-- Check provided URL for running compliance tests. -->
+    <target name="-compliance-url-check">
+        <condition property="com.mysql.jdbc.compliance.url.final" value="${com.mysql.jdbc.compliance.url.internal}" else="${com.mysql.jdbc.compliance.url}">
+            <isset property="com.mysql.jdbc.compliance.url.internal" />
+        </condition>
+
+        <fail message="Set the MySQL database connection string for the compliance tests in one of the properties, 'com.mysql.jdbc.compliance.url' or 'com.mysql.jdbc.compliance.url.N', according to desired target.">
+            <condition>
+                <not>
+                    <or>
+                        <isset property="com.mysql.jdbc.compliance.url.internal" />
+                        <isset property="com.mysql.jdbc.compliance.url" />
+                    </or>
+                </not>
+            </condition>
+        </fail>
+    </target>
+
+
+    <!-- Check provided JVM for running tests. -->
+    <target name="-testsuite-jvm-check" depends="-jdk8-check">
+        <condition property="com.mysql.jdbc3.testsuite.jvm.java"
+                   value="${com.mysql.jdbc.testsuite.jvm.internal}/bin/java"
+                   else="${com.mysql.jdbc.testsuite.jvm}/bin/java">
+            <isset property="com.mysql.jdbc.testsuite.jvm.internal" />
+        </condition>
+
+        <local name="com.mysql.jdbc.testsuite.jvm.version" />
+        <exec executable="${com.mysql.jdbc3.testsuite.jvm.java}"
+              outputproperty="com.mysql.jdbc.testsuite.jvm.version"
+              failonerror="false"
+              failifexecutionfails="false"
+              resultproperty="jvmcheckexitstatus">
+            <arg value="-version" />
+        </exec>
+
+        <fail message="Testing Connector/J requires a JVM 1.5 or higher. Set the path to this JVM (JRE or JDK) home with the property 'com.mysql.jdbc.testsuite.jvm'. Default: '${com.mysql.jdbc.jdk5}'.">
+            <condition>
+                <not>
+                    <equals arg1="${jvmcheckexitstatus}" arg2="0" />
+                </not>
+            </condition>
+        </fail>
+
+        <!-- Run JDBC 4+(<4.2) tests with ${com.mysql.jdbc.jdk8.java} if chosen JVM for tests is JVM5 -->
+        <condition property="com.mysql.jdbc4.testsuite.jvm.java" value="${com.mysql.jdbc.jdk8.java}" else="${com.mysql.jdbc3.testsuite.jvm.java}">
+            <contains string="${com.mysql.jdbc.testsuite.jvm.version}" substring="java version &quot;1.5" casesensitive="true" />
+        </condition>
+
+        <!-- Run JDBC 4.2 tests with ${com.mysql.jdbc.jdk8.java} if chosen JVM for tests is JVM5 or JVM6 or JVM7 -->
+        <condition property="com.mysql.jdbc42.testsuite.jvm.java" value="${com.mysql.jdbc.jdk8.java}" else="${com.mysql.jdbc3.testsuite.jvm.java}">
+            <or>
+                <contains string="${com.mysql.jdbc.testsuite.jvm.version}" substring="java version &quot;1.5" casesensitive="true" />
+                <contains string="${com.mysql.jdbc.testsuite.jvm.version}" substring="java version &quot;1.6" casesensitive="true" />
+                <contains string="${com.mysql.jdbc.testsuite.jvm.version}" substring="java version &quot;1.7" casesensitive="true" />
+            </or>
+        </condition>
+    </target>
+
+
+    <!-- ************************************** -->
+    <!-- ***** INITIALIZATION & FILE COPY ***** -->
+    <!-- ************************************** -->
+
+
+    <!-- Prepares files and settings for compiling driver. -->
+    <target name="init" depends="-compiler-check, -init-copy, -init-filter-license, -init-no-crypto">
+        <!-- The following is needed for source distributions as the classpath can't be dynamically altered, and not having this directory present causes the
+             build to fail. -->
+        <available file="${com.mysql.jdbc.docs.sourceDir}" property="com.mysql.jdbc.docs.sourcesPresent" />
+        <available classname="com.mchange.v2.c3p0.QueryConnectionTester" classpathref="project.build.classpath" property="com.mysql.jdbc.c3p0Present" />
+        <available classname="org.apache.log4j.Logger" classpathref="project.build.classpath" property="com.mysql.jdbc.log4jPresent" />
+        <available classname="org.jboss.resource.adapter.jdbc.ValidConnectionChecker"
+                   classpathref="project.build.classpath"
+                   property="com.mysql.jdbc.jbossPresent" />
+    </target>
+
+
+    <!-- Copy source files and fix licensing header in source files. -->
+    <target name="-init-copy" depends="-init-copy-common, -replace-headers-commercial" />
+
+
+    <!-- Copy source files. -->
+    <target name="-init-copy-common" depends="clean">
+        <tstamp />
+
+        <mkdir dir="${buildDir}" />
+
+        <exec dir="."
+              executable="cmd"
+              osfamily="windows"
+              outputproperty="git_revision_from_cmd"
+              failonerror="false"
+              failifexecutionfails="false"
+              resultproperty="gitcheckexitstatus">
+            <arg line="/c git rev-parse --verify HEAD^^{commit}" />
+        </exec>
+
+        <exec executable="git"
+              osfamily="unix"
+              outputproperty="git_revision_from_cmd"
+              failonerror="false"
+              failifexecutionfails="false"
+              resultproperty="gitcheckexitstatus">
+            <arg line="rev-parse --verify HEAD^{commit}" />
+        </exec>
+
+        <!-- The following workaround is needed for the RE builds environment, which build from a non-versioned directory, so revision information is provided
+            from an external revision-info.properties file. -->
+        <property prefix="revinfo" file="revision-info.properties" />
+
+        <condition property="git_revision" value="${git_revision_from_cmd}" else="${revinfo.commit}">
+            <equals arg1="${gitcheckexitstatus}" arg2="0" />
+        </condition>
+
+        <filterset id="versionFilterset">
+            <filter token="MYSQL_CJ_MAJOR_VERSION" value="${major_version}" />
+            <filter token="MYSQL_CJ_MINOR_VERSION" value="${minor_version}" />
+            <filter token="MYSQL_CJ_SUBMINOR_VERSION" value="${subminor_version}" />
+            <filter token="MYSQL_CJ_VERSION_STATUS" value="${version_status}" />
+            <filter token="MYSQL_CJ_VERSION" value="${full.version}" />
+            <filter token="MYSQL_CJ_REVISION" value="${git_revision}" />
+            <filter token="MYSQL_CJ_FULL_PROD_NAME" value="${fullProdName}" />
+            <filter token="MYSQL_CJ_DISPLAY_PROD_NAME" value="${prodDisplayName}" />
+        </filterset>
+
+        <condition property="licensetype" value="commercial" else="GPL">
+            <isset property="com.mysql.jdbc.commercialBuild" />
+        </condition>
+        <filterset id="licenseFilterset">
+            <filter token="MYSQL_CJ_LICENSE_TYPE" value="${licensetype}" />
+        </filterset>
+
+        <copy todir="${buildDir}/${fullProdName}" filtering="true">
+            <fileset dir="${sourceDir}/" excludes="**/CVS">
+                <patternset id="classjar">
+                    <exclude name="**/*.class*" />
+                    <exclude name="**/*.jar" />
+                </patternset>
+            </fileset>
+
+            <filterset refid="versionFilterset" />
+            <filterset refid="licenseFilterset" />
+        </copy>
+
+        <copy todir="${buildDir}/${fullProdName}" filtering="false">
+            <fileset dir="${sourceDir}" excludes="**/CVS">
+                <patternset id="dojar">
+                    <include name="**/*.jar*" />
+                </patternset>
+            </fileset>
+        </copy>
+    </target>
+
+
+    <!-- Fix licensing header in source files. -->
+    <target name="-replace-headers-commercial" if="com.mysql.jdbc.commercialBuild">
+        <replaceregexp match=" *The MySQL Connector.*1301  ?USA"
+                       replace="${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}"
+                       flags="s">
+            <fileset dir="${buildDir}/${fullProdName}" includes="**/*" />
+        </replaceregexp>
+    </target>
+
+
+    <!-- Add commercial license configuration class (Build). -->
+    <target name="-init-filter-license" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.filterLicense">
+        <copy file="${com.mysql.jdbc.extra.libs}/CommercialLicenseConfiguration.notjava"
+              toFile="${buildDir}/${fullProdName}/com/mysql/jdbc/LicenseConfiguration.java"
+              overwrite="true" />
+    </target>
+
+
+    <!-- Add no-crypto export control class (Build). -->
+    <target name="-init-no-crypto" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.noCryptoBuild">
+        <copy file="${com.mysql.jdbc.extra.libs}/ExportControlledNoCrypto.notjava"
+              toFile="${buildDir}/${fullProdName}/com/mysql/jdbc/ExportControlled.java"
+              overwrite="true" />
+    </target>
+
+
+    <!-- Copy commercial license configuration class (Package). -->
+    <target name="-copy-filter-license" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.filterLicense">
+        <copy file="${com.mysql.jdbc.extra.libs}/CommercialLicenseConfiguration.notjava"
+              toFile="${packageDest}/src/com/mysql/jdbc/LicenseConfiguration.java"
+              overwrite="true" />
+    </target>
+
+
+    <!-- Copy no-crypto export control class (Package). -->
+    <target name="-copy-no-crypto" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.noCryptoBuild">
+        <copy file="${com.mysql.jdbc.extra.libs}/ExportControlledNoCrypto.notjava"
+              toFile="${packageDest}/src/com/mysql/jdbc/ExportControlled.java"
+              overwrite="true" />
+    </target>
+
+
+    <!-- Copy README-commercial info (Package). -->
+    <target name="-copy-readme-commercial" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.commercialBuild">
+        <copy file="${com.mysql.jdbc.extra.libs}/README-commercial" tofile="${packageDest}/README.txt" filtering="true">
+            <filterset refid="versionFilterset" />
+            <filterset refid="licenseFilterset" />
+        </copy>
+        <copy file="${packageDest}/README.txt" tofile="${packageDest}/README" overwrite="true" />
+    </target>
+
+
+    <!-- Copy README info (Package). -->
+    <target name="-copy-readme-noncommercial" depends="-init-copy" unless="com.mysql.jdbc.commercialBuild">
+        <copy file="${basedir}/README" tofile="${packageDest}/README.txt" filtering="true">
+            <filterset refid="versionFilterset" />
+        </copy>
+        <copy file="${packageDest}/README.txt" tofile="${packageDest}/README" overwrite="true" />
+    </target>
+
+
+    <!-- Copy LICENCE.mysql and replace license commercial headers (Package). -->
+    <target name="-replace-license-commercial" depends="-extra-libs-check, -init-copy" if="com.mysql.jdbc.commercialBuild">
+        <delete file="${packageDest}/COPYING" />
+        <copy file="${com.mysql.jdbc.extra.libs}/LICENSE.mysql" toDir="${packageDest}" />
+
+        <!-- For safety. -->
+        <replaceregexp match=" *The MySQL Connector.*1301  ?USA"
+                       replace="${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}"
+                       flags="s">
+            <fileset dir="${packageDest}" includes="**/*" />
+        </replaceregexp>
+    </target>
+
+
+    <!-- ************************************ -->
+    <!-- ***** DISTRIBUTION & PACKAGING ***** -->
+    <!-- ************************************ -->
+
+
+    <!-- Make MySQL GPL-licensed or commercially-licensed binaries package, that contain sources and docs. -->
+    <target name="full-package"
+            description="Builds driver, binary .jar file, docs and packages (.zip, .tar.gz) suitable for distribution that _do_ contain sources and docs."
+            depends="full-dist, -make-packages, -create-archives" />
+
+
+    <!-- Make MySQL GPL-licensed or commercially-licensed binaries package, that doesn't contain sources but contain docs. -->
+    <target name="full-package-no-sources"
+            description="Builds driver, binary .jar file, docs and packages (.zip, .tar.gz) suitable for distribution that do _not_ contain sources but contain docs."
+            depends="full-dist, -make-packages, -remove-sources, -create-archives" />
+
+
+    <!-- Make MySQL GPL-licensed or commercially-licensed binaries package, that contain sources but no docs. -->
+    <target name="package"
+            description="Builds driver, binary .jar file, docs and packages (.zip, .tar.gz) suitable for distribution that _do_ contain sources but no docs."
+            depends="dist, -make-packages, -create-archives" />
+
+
+    <!-- Build a distribution 'image' that include docs. -->
+    <target name="full-dist" description="Builds driver, binary .jar file and docs, basically a distribution 'image'." depends="dist, -bundle-docs" />
+
+
+    <!-- Build and install the driver jar into the local maven repository. -->
+    <target name="install" description="Builds and installs the driver jar into the local maven repository." depends="full-package">
+        <exec executable="mvn" osfamily="unix" failonerror="true" failifexecutionfails="true">
+            <arg line="install:install-file 
+                -Dfile=${mavenUploadDir}/${fullProdName}.jar
+                -Dsources=${mavenUploadDir}/${fullProdName}-sources.jar
+                -DpomFile=${buildDir}/${fullProdName}/doc/sources/pom.xml
+                -DcreateChecksum=true" />
+        </exec>
+    </target>
+
+
+    <!-- Build a distribution 'image' that doesn't include docs. -->
+    <target name="dist" description="Builds driver and binary .jar file, basically a distribution 'image' without docs." depends="init, compile">
+        <delete file="${buildDir}/${fullProdName}-bin.jar" />
+
+        <mkdir dir="${buildDir}/META-INF" />
+
+        <!-- JDBC 4+ support of service provider mechanism. -->
+        <mkdir dir="${buildDir}/${fullProdName}/META-INF/services/" />
+        <echo file="${buildDir}/${fullProdName}/META-INF/services/java.sql.Driver"
+              message="com.mysql.jdbc.Driver${line.separator}com.mysql.fabric.jdbc.FabricMySQLDriver" />
+
+        <property name="osgid-version" value="${major_version}.${minor_version}.${subminor_version}" />
+
+        <property name="jee-imports"
+                  value="javax.naming,javax.naming.spi,javax.sql,javax.transaction.xa;version=&quot;[1.0.1, 2.0.0)&quot;;resolution:=optional" />
+        <property name="crypto-imports" value="javax.net,javax.net.ssl;version=&quot;[1.0.1, 2.0.0)&quot;;resolution:=optional" />
+        <property name="jdbc4-imports"
+                  value="javax.xml.parsers, javax.xml.stream,javax.xml.transform,javax.xml.transform.dom,javax.xml.transform.sax,javax.xml.transform.stax,javax.xml.transform.stream,org.w3c.dom,org.xml.sax,org.xml.sax.helpers;resolution:=optional" />
+        <property name="integration-imports"
+                  value="com.mchange.v2.c3p0;version=&quot;[0.9.1.2, 1.0.0)&quot;;resolution:=optional,org.jboss.resource.adapter.jdbc;resolution:=optional,org.jboss.resource.adapter.jdbc.vendor;resolution:=optional" />
+
+        <property name="driver-exports"
+                  value="com.mysql.jdbc;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc.log,javax.naming,javax.net.ssl,javax.xml.transform,org.xml.sax&quot;" />
+        <property name="jee-exports"
+                  value="com.mysql.jdbc.jdbc2.optional;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc,com.mysql.jdbc.log,javax.naming,javax.sql,javax.transaction.xa&quot;" />
+        <property name="logging-exports" value="com.mysql.jdbc.log;version=&quot;${osgid-version}&quot;" />
+        <property name="profiling-exports" value="com.mysql.jdbc.profiler;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
+        <property name="util-exports" value="com.mysql.jdbc.util;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc.log&quot;" />
+        <property name="exceptions-exports" value="com.mysql.jdbc.exceptions;version=&quot;${osgid-version}&quot;" />
+        <property name="jdbc4-exceptions-exports"
+                  value="com.mysql.jdbc.exceptions.jdbc4;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
+
+        <property name="interceptors-exports" value="com.mysql.jdbc.interceptors;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
+        <property name="integration-exports"
+                  value="com.mysql.jdbc.integration.c3p0;version=&quot;${osgid-version}&quot;,com.mysql.jdbc.integration.jboss;version=&quot;${osgid-version}&quot;" />
+        <property name="configs-exports" value="com.mysql.jdbc.configs;version=&quot;${osgid-version}&quot;" />
+        <property name="legacy-exports" value="org.gjt.mm.mysql;version=&quot;${osgid-version}&quot;" />
+
+        <manifest file="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF">
+            <attribute name="Built-By" value="${user.name}" />
+            <attribute name="Specification-Title" value="JDBC" />
+            <attribute name="Specification-Version" value="4.2" />
+            <attribute name="Specification-Vendor" value="Oracle Corporation" />
+            <attribute name="Implementation-Title" value="${prodDisplayName}" />
+            <attribute name="Implementation-Version" value="${full.version}" />
+            <attribute name="Implementation-Vendor-Id" value="com.mysql" />
+            <attribute name="Implementation-Vendor" value="Oracle" />
+
+            <!-- OSGi -->
+            <attribute name="Bundle-Vendor" value="Oracle Corporation" />
+            <attribute name="Bundle-Classpath" value="." />
+            <attribute name="Bundle-Version" value="${osgid-version}" />
+            <attribute name="Bundle-Name" value="Oracle Corporation's JDBC Driver for MySQL" />
+            <attribute name="Bundle-ManifestVersion" value="2" />
+            <attribute name="Bundle-SymbolicName" value="com.mysql.jdbc" />
+            <attribute name="Export-Package"
+                       value="${driver-exports},${jee-exports},${logging-exports},${profiling-exports},${util-exports},${exceptions-exports},${jdbc4-exceptions-exports},${interceptors-exports},${integration-exports},${configs-exports},${legacy-exports}" />
+            <attribute name="Import-Package" value="${crypto-imports},${jdbc4-imports},${jee-imports},${integration-imports}" />
+        </manifest>
+
+        <jar jarfile="${buildDir}/${fullProdName}/${fullProdName}-bin.jar"
+             basedir="${compiler.output}"
+             includes="**/*.class,**/*.properties*,META-INF/**"
+             excludes="testsuite/**,demo/**"
+             index="true"
+             manifest="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF" />
+    </target>
+
+
+    <!-- Prepare a package for archiving. -->
+    <target name="-make-packages"
+            depends="-make-packages-init, -copy-filter-license, -copy-no-crypto, -copy-readme-commercial, -copy-readme-noncommercial, -replace-license-commercial">
+        <!-- Fix CRLF for various platforms. -->
+
+        <!-- For Windows-y platforms. -->
+        <fixcrlf srcdir="${packageDest}" tab="remove" tablength="8" eol="crlf" includes="**/README.txt" />
+
+        <!-- For Unix-y platforms. -->
+        <fixcrlf srcdir="${packageDest}" tab="remove" tablength="8" eol="lf" includes="**/README" />
+    </target>
+
+
+    <!-- Prepare a package for archiving (initialize). -->
+    <target name="-make-packages-init" depends="dist">
+        <mkdir dir="${distDir}" />
+        <mkdir dir="${toPackage}" />
+        <mkdir dir="${packageDest}" />
+
+        <patternset id="non.test.sources">
+            <exclude name="**/*.nb*" />
+            <exclude name="**/*.bak" />
+            <exclude name="**/*.*~" />
+            <exclude name="**/lib-coverage/*" />
+            <exclude name="**/clover/*" />
+            <exclude name="**/checkstyle/*" />
+            <exclude name="**/.*" />
+        </patternset>
+
+        <copy todir="${packageDest}">
+            <fileset dir="${buildDir}/${fullProdName}" includes="debug/*, docs/**, *.jar" excludes="docs/sources">
+                <patternset refid="non.test.sources" />
+            </fileset>
+
+            <fileset dir="." includes="src/com/**, src/doc/**, src/lib/*, src/org/**, src/testsuite/**, src/demo/**, build.xml, CHANGES, COPYING">
+                <patternset refid="non.test.sources" />
+            </fileset>
+        </copy>
+    </target>
+
+
+    <!-- Delete source files from package. -->
+    <target name="-remove-sources">
+        <echo>Removing sources from '${toPackage}'</echo>
+        <delete>
+            <fileset dir="${packageDest}">
+                <include name="**/*.java" />
+                <include name="build.xml" />
+            </fileset>
+        </delete>
+
+        <delete dir="${packageDest}/src" />
+
+        <property name="com.mysql.jdbc.noSources" value="yes" />
+    </target>
+
+
+    <!-- Create archive files with package. -->
+    <target name="-create-archives" depends="-create-common-archives, -create-maven-archive" />
+
+
+    <!-- Create common archives. -->
+    <target name="-create-common-archives" depends="-make-packages">
+        <delete file="${distDir}/${fullProdName}.tar.gz" />
+
+        <tar destfile="${distDir}/${fullProdName}.tar.gz" compression="gzip" longfile="gnu">
+            <tarfileset dir="${toPackage}">
+                <patternset refid="non.test.sources" />
+            </tarfileset>
+        </tar>
+        <checksum file="${distDir}/${fullProdName}.tar.gz" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
+
+        <delete file="${distDir}/${fullProdName}.zip" />
+
+        <zip destfile="${distDir}/${fullProdName}.zip">
+            <fileset dir="${toPackage}">
+                <patternset refid="non.test.sources" />
+            </fileset>
+        </zip>
+        <checksum file="${distDir}/${fullProdName}.zip" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
+    </target>
+
+
+    <!-- Create a Maven bundle for upload to their repository. -->
+    <target name="-create-maven-archive"
+            depends="-make-packages, -create-maven-archive-common, -create-maven-archive-sources"
+            unless="com.mysql.jdbc.commercialBuild">
+        <delete file="${distDir}/${fullProdName}.maven.tar.gz" />
+
+        <tar destfile="${distDir}/${fullProdName}.maven.tar.gz" basedir="${mavenUploadDir}" compression="gzip" longfile="gnu" />
+    </target>
+
+
+    <!-- Create a Maven bundle for upload to their repository (common files to all packaging modes). -->
+    <target name="-create-maven-archive-common">
+        <tempfile destdir="${buildDir}" prefix="maven-bundle-" property="mavenUploadDir" />
+
+        <mkdir dir="${mavenUploadDir}" />
+
+        <jar jarfile="${mavenUploadDir}/${fullProdName}.jar"
+             basedir="${compiler.output}"
+             includes="**/*.class,**/*.properties*,COPYING,README,META-INF/**"
+             excludes="testsuite/**,demo/**"
+             index="true"
+             manifest="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF" />
+        <checksum file="${mavenUploadDir}/${fullProdName}.jar" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
+        <checksum file="${mavenUploadDir}/${fullProdName}.jar" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
+
+        <copy file="${buildDir}/${fullProdName}/doc/sources/pom.xml" toFile="${mavenUploadDir}/${fullProdName}.pom" filtering="true" />
+        <checksum file="${mavenUploadDir}/${fullProdName}.pom" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
+        <checksum file="${mavenUploadDir}/${fullProdName}.pom" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
+
+        <copy file="./COPYING" toDir="${mavenUploadDir}" />
+        <checksum file="${mavenUploadDir}/COPYING" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
+        <checksum file="${mavenUploadDir}/COPYING" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
+    </target>
+
+
+    <!-- Create a Maven bundle for upload to their repository (include sources). -->
+    <target name="-create-maven-archive-sources" depends="-create-maven-archive-common" unless="com.mysql.jdbc.noSources">
+        <jar jarfile="${mavenUploadDir}/${fullProdName}-sources.jar"
+             basedir="${compiler.output}"
+             includes="**/*.java,**/*.properties*,COPYING,README,README.txt"
+             excludes="testsuite/**,demo/**,doc/**" />
+        <checksum file="${mavenUploadDir}/${fullProdName}-sources.jar" forceOverwrite="yes" fileext=".md5" algorithm="MD5" />
+        <checksum file="${mavenUploadDir}/${fullProdName}-sources.jar" forceOverwrite="yes" fileext=".sha1" algorithm="SHA-1" />
+    </target>
+
+
+    <!-- Prepare docs to include in a distribution. -->
+    <target name="-bundle-docs" depends="init" if="com.mysql.jdbc.docs.sourcesPresent">
+        <copy file="${com.mysql.jdbc.docs.sourceDir}/en/html/connector-j.html" todir="${buildDir}/${fullProdName}/docs" failonerror="false" />
+        <copy file="${com.mysql.jdbc.docs.sourceDir}/en/pdf/connector-j.pdf" todir="${buildDir}/${fullProdName}/docs" failonerror="false" />
+        <copy file="${com.mysql.jdbc.docs.sourceDir}/en/txt/connector-j.txt" tofile="${buildDir}/${fullProdName}/docs/README.txt" failonerror="false" />
+    </target>
+
+
+    <!-- ********************* -->
+    <!-- ***** COMPILING ***** -->
+    <!-- ********************* -->
+
+
+    <!-- Compile the driver including JDBC 3 and JDBC 4+ implementations, JUnit test suite and 'helpers' for third-party software. -->
+    <target name="compile"
+            description="Compiles driver including JDBC 3 and JDBC 4+ implementations, JUnit test suite and integration 'helpers' for third-party software."
+            depends="init, compile-driver, compile-testsuite, compile-integration" />
+
+
+    <!-- Compile the driver including JDBC 3 and JDBC 4+ implementations only. -->
+    <target name="compile-driver"
+            description="Compiles driver including JDBC 3 and JDBC 4+ implementations only."
+            depends="-compile-driver-jdbc3, -compile-driver-jdbc4" />
+
+
+    <!-- Compile JDBC 3 implementation. -->
+    <target name="-compile-driver-jdbc3" depends="init, -clean-output">
+        <echo>Compiling MySQL Connector/J JDBC 3 implementation with '${com.mysql.jdbc.jdk5}' to '${compiler.output}'</echo>
+
+        <javac sourcepath=""
+               srcdir="${buildDir}/${fullProdName}"
+               destdir="${compiler.output}"
+               deprecation="off"
+               debug="${debug.enable}"
+               fork="yes"
+               executable="${com.mysql.jdbc.jdk5.javac}"
+               compiler="modern"
+               includeantruntime="false"
+               source="1.5"
+               target="1.5">
+            <include name="**/*.java" />
+            <exclude name="testsuite/**" />
+            <exclude name="com/mysql/jdbc/integration/**" />
+            <exclude name="com/mysql/jdbc/log/Log4JLogger.java" />
+            <exclude name="**/JDBC4*.java" />
+            <exclude name="**/FabricMultiTenantConnectionProvider.java" />
+            <exclude name="**/HibernateFabric.java" />
+            <exclude name="com/mysql/jdbc/exceptions/jdbc4/*" />
+            <classpath refid="project.build.classpath" />
+        </javac>
+    </target>
+
+
+    <!-- Compile JDBC 4+ implementation. -->
+    <target name="-compile-driver-jdbc4" depends="-compile-driver-jdbc3">
+        <echo>Compiling MySQL Connector/J JDBC 4+ implementation with '${com.mysql.jdbc.jdk8}' to '${compiler.output}'</echo>
+
+        <javac sourcepath=""
+               srcdir="${buildDir}/${fullProdName}"
+               destdir="${compiler.output}"
+               deprecation="off"
+               debug="${debug.enable}"
+               fork="yes"
+               executable="${com.mysql.jdbc.jdk8.javac}"
+               compiler="modern"
+               includeantruntime="false"
+               bootclasspath="${com.mysql.jdbc.jre6.rtjar}"
+               source="1.6"
+               target="1.6">
+            <include name="**/FabricMultiTenantConnectionProvider.java" />
+            <include name="**/HibernateFabric.java" />
+            <include name="**/JDBC4*.java" />
+            <exclude name="**/JDBC42*.java" />
+            <include name="com/mysql/jdbc/exceptions/jdbc4/*" />
+            <classpath refid="project.build.classpath" />
+        </javac>
+
+        <javac sourcepath=""
+               srcdir="${buildDir}/${fullProdName}"
+               destdir="${compiler.output}"
+               deprecation="off"
+               debug="${debug.enable}"
+               fork="yes"
+               executable="${com.mysql.jdbc.jdk8.javac}"
+               compiler="modern"
+               includeantruntime="false"
+               source="1.8"
+               target="1.8">
+            <include name="**/JDBC42*.java" />
+            <classpath refid="project.build.classpath" />
+        </javac>
+    </target>
+
+
+    <!-- Compile the driver including JDBC 3 and JDBC 4+ implementations and JUnit test suite. -->
+    <target name="compile-testsuite"
+            description="Compiles driver including JDBC 3 and JDBC 4+ implementations and JUnit test suite."
+            depends="init, compile-driver">
+        <echo>Compiling MySQL Connector/J testsuite with '${com.mysql.jdbc.jdk5}' to '${compiler.output}'</echo>
+
+        <javac sourcepath=""
+               srcdir="${buildDir}/${fullProdName}"
+               destdir="${compiler.output}"
+               deprecation="off"
+               debug="${debug.enable}"
+               fork="yes"
+               executable="${com.mysql.jdbc.jdk5.javac}"
+               compiler="modern"
+               includeantruntime="false"
+               source="1.5"
+               target="1.5">
+            <include name="testsuite/**" />
+            <exclude name="testsuite/requiresNonRedists/**" />
+            <exclude name="testsuite/**/jdbc4*/**" />
+            <classpath refid="project.build.classpath" />
+        </javac>
+
+        <javac sourcepath=""
+               srcdir="${buildDir}/${fullProdName}"
+               destdir="${compiler.output}"
+               deprecation="off"
+               debug="${debug.enable}"
+               fork="yes"
+               executable="${com.mysql.jdbc.jdk8.javac}"
+               compiler="modern"
+               includeantruntime="false"
+               bootclasspath="${com.mysql.jdbc.jre6.rtjar}"
+               source="1.6"
+               target="1.6">
+            <include name="testsuite/**/jdbc4/**" />
+            <classpath refid="project.build.classpath" />
+        </javac>
+
+        <javac sourcepath=""
+               srcdir="${buildDir}/${fullProdName}"
+               destdir="${compiler.output}"
+               deprecation="off"
+               debug="${debug.enable}"
+               fork="yes"
+               executable="${com.mysql.jdbc.jdk8.javac}"
+               compiler="modern"
+               includeantruntime="false"
+               source="1.8"
+               target="1.8">
+            <include name="testsuite/**/jdbc42/**" />
+            <classpath refid="project.build.classpath" />
+        </javac>
+    </target>
+
+
+    <!-- Compile the driver including JDBC 3 and JDBC 4+ implementations and integration 'helpers' for third-party software. -->
+    <target name="compile-integration"
+            description="Compiles driver including JDBC 3 and JDBC 4+ implementations and integration 'helpers' for third-party software."
+            depends="compile-driver, -compile-integration-c3p0, -compile-integration-jboss, -compile-integration-log4j" />
+
+
+    <!-- Compile c3p0 integration. -->
+    <target name="-compile-integration-c3p0" depends="compile-driver" if="com.mysql.jdbc.c3p0Present">
+        <echo>Compiling MySQL Connector/J-c3p0 integration with '${com.mysql.jdbc.jdk5}' to '${compiler.output}'</echo>
+
+        <javac sourcepath=""
+               srcdir="${buildDir}/${fullProdName}"
+               destdir="${compiler.output}"
+               deprecation="off"
+               debug="${debug.enable}"
+               fork="yes"
+               executable="${com.mysql.jdbc.jdk5.javac}"
+               compiler="modern"
+               includeantruntime="false"
+               source="1.5"
+               target="1.5">
+            <include name="com/mysql/jdbc/integration/c3p0/**" />
+            <classpath refid="project.build.classpath" />
+        </javac>
+    </target>
+
+
+    <!-- Compile jBoss integration. -->
+    <target name="-compile-integration-jboss" depends="compile-driver" if="com.mysql.jdbc.jbossPresent">
+        <echo>Compiling MySQL Connector/J-jboss integration with '${com.mysql.jdbc.jdk5}' to '${compiler.output}'</echo>
+
+        <javac sourcepath=""
+               srcdir="${buildDir}/${fullProdName}"
+               destdir="${compiler.output}"
+               deprecation="off"
+               debug="${debug.enable}"
+               fork="yes"
+               executable="${com.mysql.jdbc.jdk5.javac}"
+               compiler="modern"
+               includeantruntime="false"
+               source="1.5"
+               target="1.5">
+            <include name="com/mysql/jdbc/integration/jboss/**" />
+            <classpath refid="project.build.classpath" />
+        </javac>
+    </target>
+
+
+    <!-- Compile Log4j integration. -->
+    <target name="-compile-integration-log4j" depends="compile-driver" if="com.mysql.jdbc.log4jPresent">
+        <echo>Compiling MySQL Connector/J-log4j integration with '${com.mysql.jdbc.jdk5}' to '${compiler.output}'</echo>
+
+        <javac sourcepath=""
+               srcdir="${buildDir}/${fullProdName}"
+               destdir="${compiler.output}"
+               deprecation="off"
+               debug="${debug.enable}"
+               fork="yes"
+               executable="${com.mysql.jdbc.jdk5.javac}"
+               compiler="modern"
+               includeantruntime="false"
+               source="1.5"
+               target="1.5">
+            <include name="com/mysql/jdbc/log/Log4JLogger.java" />
+            <classpath refid="project.build.classpath" />
+        </javac>
+    </target>
+
+
+    <!-- ******************* -->
+    <!-- ***** CLEANUP ***** -->
+    <!-- ******************* -->
+
+
+    <!-- Delete the build and distribution directories and archives. -->
+    <target name="real-clean" description="Deletes the build and distribution directories.">
+        <delete dir="${buildDir}" />
+        <delete dir="${distDir}" />
+    </target>
+
+
+    <!-- Delete the build directory. -->
+    <target name="clean"
+            description="Deletes the build directory unless 'com.mysql.jdbc.noCleanBetweenCompiles=yes'."
+            unless="${com.mysql.jdbc.noCleanBetweenCompiles}">
+        <delete dir="${buildDir}" />
+    </target>
+
+
+    <!-- Delete compiled classes from build directory. -->
+    <target name="-clean-output" unless="${com.mysql.jdbc.noCleanBetweenCompiles}">
+        <delete>
+            <fileset dir="${buildDir}" includes="**/*.class" />
+        </delete>
+    </target>
+
+
+    <!-- ************************* -->
+    <!-- ***** DOCUMENTATION ***** -->
+    <!-- ************************* -->
+
+
+    <!-- Generate docs for MySQL Connector/J docs web site. -->
+    <target name="docs-generate-dynamic-docs"
+            description="Generates docs for the MySQL Connector/J docs web site."
+            depends="docs-generate-properties-table, docs-generate-error-mapping-table" />
+
+
+    <!-- Generate the properties table doc for MySQL Connector/J docs web site. -->
+    <target name="docs-generate-properties-table"
+            description="Generates properties table doc for the MySQL Connector/J docs web site."
+            depends="compile-driver">
+        <tempfile property="properties-xml" suffix=".xml" />
+        <java classname="com.mysql.jdbc.util.PropertiesDocGenerator" output="${properties-xml}" classpath="${buildDir}/${fullProdName}" />
+        <copy file="${properties-xml}" tofile="${buildDir}/${fullProdName}/docs/sources/connPropsToDocbook.xml" />
+        <delete file="${properties-xml}" />
+    </target>
+
+
+    <!-- Generate the error mapping table doc for MySQL Connector/J docs web site. -->
+    <target name="docs-generate-error-mapping-table"
+            description="Generates error mapping table doc for the MySQL Connector/J docs web site."
+            depends="compile-driver">
+        <tempfile property="errorsMapping-xml" suffix=".xml" />
+        <java classname="com.mysql.jdbc.util.ErrorMappingsDocGenerator" output="${errorsMapping-xml}" classpath="${buildDir}/${fullProdName}" />
+        <copy file="${errorsMapping-xml}" tofile="${buildDir}/${fullProdName}/docs/sources/errorMapToDocbook.xml" />
+        <delete file="${errorsMapping-xml}" />
+    </target>
+
+
+    <!-- ******************* -->
+    <!-- ***** TESTING ***** -->
+    <!-- ******************* -->
+
+
+    <!-- Run the full test suite, single test set or single test, and compliance test suite, against multiple JVMs and server configs. -->
+    <target name="test-all-multi"
+            description="Runs the full test suite, single test set or single test, and compliance test suite, against multiple JVMs and server configs."
+            depends="compile">
+        <delete dir="${buildDir}/junit" />
+        <antcall target="test-multijvm" />
+        <antcall target="test-compliance-multijvm" />
+
+        <fail message="Tests failed. Check logs and/or reports in '${buildDir}/junit'." if="tests.compliance.failed" />
+    </target>
+
+
+    <!-- Run the full test suite, single test set or named test against multiple JVMs and server configs. -->
+    <target name="test-multijvm"
+            description="Runs the full test suite, single test set (variable 'test') or named tests (variables 'test' and 'methods') against multiple JVMs and server configs."
+            depends="compile">
+        <array8 arrayproperty="com.mysql.jdbc.testsuite.jvm" outputproperty="jvm.value" indexproperty="jvm.index">
+            <array8 arrayproperty="com.mysql.jdbc.testsuite.url" outputproperty="url.value" indexproperty="url.index">
+                <local name="test.run" />
+                <condition property="test.run">
+                    <and>
+                        <isset property="jvm.value" />
+                        <isset property="url.value" />
+                    </and>
+                </condition>
+                <antcall target="-test-multijvm-iteration">
+                    <param name="jvm.value" value="${jvm.value}" />
+                    <param name="url.value" value="${url.value}" />
+                    <param name="url.index" value="${url.index}" />
+                    <param name="test.mode" value="testsuite" />
+                    <param name="test.target" value="test" />
+                    <param name="test.run" value="${test.run}" />
+                </antcall>
+            </array8>
+        </array8>
+    </target>
+
+
+    <!-- Run the full test suite, single test set or named tests against one JVM and one server config. -->
+    <target name="test"
+            description="Runs the full test suite, single test set (variable 'test') or named tests (variables 'test' and 'methods') against one JVM and one server config."
+            depends="-testsuite-url-check, -testsuite-jvm-check, compile, -set-test-result-prefix">
+        <property name="junit.unitregress.results" value="${junit.results}/${test.result.prefix}/unitregress" />
+
+        <mkdir dir="${junit.unitregress.results}/report" />
+
+        <local name="test.ismethods" />
+        <condition property="test.ismethods">
+            <and>
+                <isset property="test" />
+                <isset property="methods" />
+            </and>
+        </condition>
+
+        <local name="test.message.jdbc3orcommon" />
+        <condition property="test.message.jdbc3orcommon"
+                   value="Running JDBC 3 unit tests against '${com.mysql.jdbc.testsuite.url.final}' with jvm '${com.mysql.jdbc3.testsuite.jvm.java}'">
+            <not>
+                <isset property="test" />
+            </not>
+        </condition>
+        <condition property="test.message.jdbc3orcommon"
+                   value="Running JDBC unit test '${test}', method(s) '${methods}' against '${com.mysql.jdbc.testsuite.url.final}' with jvm '${com.mysql.jdbc3.testsuite.jvm.java}'"
+                   else="Running JDBC unit test '${test}' against '${com.mysql.jdbc.testsuite.url.final}' with jvm '${com.mysql.jdbc3.testsuite.jvm.java}'">
+            <isset property="test.ismethods" />
+        </condition>
+        <echo>${test.message.jdbc3orcommon}</echo>
+
+        <junit printsummary="yes"
+               fork="on"
+               forkmode="once"
+               jvm="${com.mysql.jdbc3.testsuite.jvm.java}"
+               errorProperty="tests.failed"
+               failureProperty="tests.failed">
+            <jvmarg value="-Xmx1024m" />
+
+            <syspropertyset refid="junit.system.properties" />
+            <sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url.final}" />
+
+            <classpath>
+                <fileset dir="${com.mysql.jdbc.extra.libs}">
+                    <include name="**/*.jar" />
+                </fileset>
+                <fileset dir="${buildDir}/${fullProdName}/lib">
+                    <include name="**/*.jar" />
+                </fileset>
+                <pathelement location="${buildDir}/${fullProdName}" />
+                <pathelement path="${java.class.path}" />
+            </classpath>
+
+            <formatter type="xml" />
+
+            <test if="${test.ismethods}" name="${test}" methods="${methods}" todir="${junit.unitregress.results}" />
+
+            <test if="test" unless="methods" name="${test}" todir="${junit.unitregress.results}" />
+
+            <batchtest unless="test" todir="${junit.unitregress.results}">
+                <fileset dir="${buildDir}/${fullProdName}">
+                    <include name="**/*Test.java" />
+                    <exclude name="**/fabric/*.java" />
+                    <exclude name="**/perf/*.java" />
+                    <exclude name="**/jdbc4*/*Test.java" />
+                </fileset>
+            </batchtest>
+        </junit>
+
+        <local name="test.message.jdbc4" />
+        <condition property="test.message.jdbc4"
+                   value="Running JDBC 4+(&lt;4.2) unit tests against '${com.mysql.jdbc.testsuite.url.final}' with jvm '${com.mysql.jdbc4.testsuite.jvm.java}'"
+                   else="">
+            <not>
+                <isset property="test" />
+            </not>
+        </condition>
+        <echo>${test.message.jdbc4}</echo>
+
+        <junit printsummary="yes"
+               fork="on"
+               forkmode="once"
+               jvm="${com.mysql.jdbc4.testsuite.jvm.java}"
+               errorProperty="tests.failed"
+               failureProperty="tests.failed">
+            <jvmarg value="-Xmx1024m" />
+
+            <syspropertyset refid="junit.system.properties" />
+            <sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url.final}" />
+
+            <classpath>
+                <fileset dir="${com.mysql.jdbc.extra.libs}">
+                    <include name="**/*.jar" />
+                </fileset>
+                <fileset dir="${buildDir}/${fullProdName}/lib">
+                    <include name="**/*.jar" />
+                </fileset>
+                <pathelement location="${buildDir}/${fullProdName}" />
+                <pathelement path="${java.class.path}" />
+            </classpath>
+
+            <formatter type="xml" />
+
+            <batchtest unless="test" todir="${junit.unitregress.results}">
+                <fileset dir="${buildDir}/${fullProdName}">
+                    <include name="**/jdbc4/*Test.java" />
+                </fileset>
+            </batchtest>
+        </junit>
+
+        <local name="test.message.jdbc42" />
+        <condition property="test.message.jdbc4"
+                   value="Running JDBC 4.2 unit tests against '${com.mysql.jdbc.testsuite.url.final}' with jvm '${com.mysql.jdbc42.testsuite.jvm.java}'"
+                   else="">
+            <not>
+                <isset property="test" />
+            </not>
+        </condition>
+        <echo>${test.message.jdbc4}</echo>
+
+        <junit printsummary="yes"
+               fork="on"
+               forkmode="once"
+               jvm="${com.mysql.jdbc42.testsuite.jvm.java}"
+               errorProperty="tests.failed"
+               failureProperty="tests.failed">
+            <jvmarg value="-Xmx1024m" />
+
+            <syspropertyset refid="junit.system.properties" />
+            <sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url.final}" />
+
+            <classpath>
+                <fileset dir="${com.mysql.jdbc.extra.libs}">
+                    <include name="**/*.jar" />
+                </fileset>
+                <fileset dir="${buildDir}/${fullProdName}/lib">
+                    <include name="**/*.jar" />
+                </fileset>
+                <pathelement location="${buildDir}/${fullProdName}" />
+                <pathelement path="${java.class.path}" />
+            </classpath>
+
+            <formatter type="xml" />
+
+            <batchtest unless="test" todir="${junit.unitregress.results}">
+                <fileset dir="${buildDir}/${fullProdName}">
+                    <include name="**/jdbc42/*Test.java" />
+                </fileset>
+            </batchtest>
+        </junit>
+
+        <junitreport todir="${junit.unitregress.results}/report">
+            <fileset dir="${junit.unitregress.results}">
+                <include name="**/TEST-*.xml" />
+            </fileset>
+            <report format="frames" todir="${junit.unitregress.results}/report" />
+        </junitreport>
+
+        <!-- Don't fail the build if we're doing multi-tests. -->
+        <fail message="Tests failed. Check logs and/or reports in '${junit.results}'.">
+            <condition>
+                <and>
+                    <equals arg1="${test.result.prefix}" arg2="" />
+                    <isset property="tests.failed" />
+                </and>
+            </condition>
+        </fail>
+
+        <local name="test.message.dontfail" />
+        <condition property="test.message.dontfail" value="Skipping test failures check because of multi-test..." else="">
+            <not>
+                <equals arg1="${test.result.prefix}" arg2="" />
+            </not>
+        </condition>
+        <echo>${test.message.dontfail}</echo>
+    </target>
+
+
+    <!-- Run compliance test suite against multiple JVMs and server configs. 
+         The JDBC compliance test suite is not shipped with MySQL Connector/J as it is not licensable except from Oracle.
+         The properties com.mysql.jdbc.compliance.url.[1..8] and jdbc.compliance.location must be set prior to running this test. -->
+    <target name="test-compliance-multijvm" description="Runs compliance test suite against multiple JVMs and server configs." depends="compile">
+        <array8 arrayproperty="com.mysql.jdbc.testsuite.jvm" outputproperty="jvm.value" indexproperty="jvm.index">
+            <array8 arrayproperty="com.mysql.jdbc.compliance.url" outputproperty="url.value" indexproperty="url.index">
+                <local name="test.run" />
+                <condition property="test.run">
+                    <and>
+                        <isset property="jvm.value" />
+                        <isset property="url.value" />
+                    </and>
+                </condition>
+                <antcall target="-test-multijvm-iteration">
+                    <param name="jvm.value" value="${jvm.value}" />
+                    <param name="url.value" value="${url.value}" />
+                    <param name="url.index" value="${url.index}" />
+                    <param name="test.mode" value="compliance" />
+                    <param name="test.target" value="test-compliance" />
+                    <param name="test.run" value="${test.run}" />
+                </antcall>
+            </array8>
+        </array8>
+    </target>
+
+
+    <!-- Run compliance test suite against one JVMs and one server config. 
+         The JDBC compliance test suite is not shipped with MySQL Connector/J as it is not licensible except from Oracle.
+         The properties com.mysql.jdbc.compliance.url and jdbc.compliance.location must be set prior to running this test. -->
+    <target name="test-compliance"
+            description="Runs compliance test suite against one JVMs and one server config."
+            depends="-compliance-url-check, -testsuite-jvm-check, compile, -set-test-result-prefix">
+        <property name="junit.compliance.results" value="${junit.results}/${test.result.prefix}/compliance" />
+
+        <mkdir dir="${junit.compliance.results}/report" />
+
+        <echo>Running compliance test suite against '${com.mysql.jdbc.compliance.url.final}' with jvm '${com.mysql.jdbc3.testsuite.jvm.java}'</echo>
+
+        <junit printsummary="yes"
+               fork="on"
+               forkmode="once"
+               jvm="${com.mysql.jdbc3.testsuite.jvm.java}"
+               errorProperty="tests.compliance.failed"
+               failureProperty="tests.compliance.failed">
+            <jvmarg value="-Xmx1024m" />
+
+            <syspropertyset refid="junit.system.properties" />
+            <sysproperty key="com.mysql.jdbc.compliance.url" value="${com.mysql.jdbc.compliance.url.final}" />
+
+            <classpath>
+                <fileset dir="${com.mysql.jdbc.extra.libs}">
+                    <include name="**/*.jar" />
+                </fileset>
+                <fileset dir="${buildDir}/${fullProdName}/lib">
+                    <include name="**/*.jar" />
+                </fileset>
+                <pathelement location="${buildDir}/${fullProdName}" />
+                <pathelement path="${java.class.path}" />
+                <pathelement location="${jdbc.compliance.location}" />
+            </classpath>
+
+            <formatter type="xml" />
+
+            <test todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.BatchUpdateTest" />
+            <test todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.ConnectionTest" />
+            <test todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.DatabaseMetaDataTest" />
+            <test todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.EscapeSyntaxTest" />
+            <test todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.PreparedStatementTest" />
+            <test todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.ResultSetMetadataTest" />
+            <test todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.ResultSetTest" />
+            <test todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.StatementTest" />
+        </junit>
+
+        <junitreport todir="${junit.compliance.results}/report">
+            <fileset dir="${junit.compliance.results}">
+                <include name="**/TEST-*.xml" />
+            </fileset>
+            <report format="frames" todir="${junit.compliance.results}/report" />
+        </junitreport>
+
+        <!-- Don't fail the build if we're doing multi-tests. -->
+        <fail message="Tests failed. Check logs and/or reports in '${junit.compliance.results}'.">
+            <condition>
+                <and>
+                    <equals arg1="${test.result.prefix}" arg2="" />
+                    <isset property="tests.compliance.failed" />
+                </and>
+            </condition>
+        </fail>
+
+        <local name="test.message.dontfail" />
+        <condition property="test.message.dontfail" value="Skipping test failures check because of multi-test..." else="">
+            <not>
+                <equals arg1="${test.result.prefix}" arg2="" />
+            </not>
+        </condition>
+        <echo>${test.message.dontfail}</echo>
+    </target>
+
+
+    <!-- Run a generic multijvm iteration. -->
+    <target name="-test-multijvm-iteration" if="${test.run}">
+        <make-output-hier jvm="${jvm.value}" jdbcUrl="${url.value}" jdbcUrlIter="${url.index}" junitOutput="${junit.results}" />
+
+        <local name="junit.output" />
+        <loadfile srcfile="${junit.results}/hier" property="junit.output" />
+
+        <antcall target="${test.target}">
+            <param name="com.mysql.jdbc.testsuite.jvm.internal" value="${jvm.value}" />
+            <param name="com.mysql.jdbc.${test.mode}.url.internal" value="${url.value}" />
+            <param name="com.mysql.jdbc.noCleanBetweenCompiles" value="yes" />
+            <param name="test.result.prefix" value="/${junit.output}" />
+        </antcall>
+    </target>
+
+
+    <!-- Set the path where the test results will be stored -->
+    <target name="-set-test-result-prefix" unless="${test.result.prefix}">
+        <property name="test.result.prefix" value="" />
+    </target>
+
+
+    <!-- ******************************************* -->
+    <!-- ***** CODE COVERAGE & INSTRUMENTATION ***** -->
+    <!-- ******************************************* -->
+
+
+    <!-- Following targets are for code coverage and depend on the 'Emma' project which can be downloaded from [http://emma.sourceforge.net/]. -->
+
+    <!-- Turn on EMMA instrumentation/reporting. -->
+    <target name="emma" description="Turns on EMMA instrumentation/reporting.">
+        <!-- directory that contains emma.jar and emma_ant.jar: -->
+        <property name="emma.dir" value="${sourceDir}/lib-coverage" />
+
+        <path id="emma.lib">
+            <pathelement location="${emma.dir}/emma.jar" />
+            <pathelement location="${emma.dir}/emma_ant.jar" />
+        </path>
+
+        <taskdef resource="emma_ant.properties" classpathref="emma.lib" />
+
+        <property name="emma.enabled" value="true" />
+        <property name="emma.coverage.dir" value="${buildDir}/${fullProdName}-coverage" />
+    </target>
+
+
+    <!-- Run the full test suite and compliance test suite, against multiple JVMs and server configs, producing coverage reports. -->
+    <target name="test-all-multi-report"
+            description="Runs the full test suite and compliance test suite, against multiple JVMs and server configs, producing coverage reports."
+            depends="test-coverage-multijvm, test-coverage-compliance-multijvm">
+        <emma enabled="${emma.enabled}">
+            <report sourcepath="${buildDir}/${fullProdName}">
+                <fileset dir="${emma.coverage.dir}">
+                    <include name="*.emma" />
+                </fileset>
+                <txt outfile="${emma.coverage.dir}/coverage.txt" />
+                <html outfile="${emma.coverage.dir}/coverage.html" />
+            </report>
+        </emma>
+    </target>
+
+
+    <!-- Run the full test suite and compliance test suite, against one JVM and one server config, producing coverage reports. -->
+    <target name="test-all-report"
+            description="Runs the full test suite and compliance test suite, against one JVM and one server config, producing coverage reports."
+            depends="test-coverage, test-coverage-compliance">
+        <emma enabled="${emma.enabled}">
+            <report sourcepath="${buildDir}/${fullProdName}">
+                <fileset dir="${emma.coverage.dir}">
+                    <include name="*.emma" />
+                </fileset>
+                <txt outfile="${emma.coverage.dir}/coverage.txt" />
+                <html outfile="${emma.coverage.dir}/coverage.html" />
+            </report>
+        </emma>
+    </target>
+
+
+    <!-- Add bytecode instrumentation. -->
+    <target name="-emma-instrument" depends="init, compile, emma">
+        <emma enabled="${emma.enabled}">
+            <instr instrpathref="built.driver.only.classpath"
+                   destdir="${compiler.output}"
+                   metadatafile="${emma.coverage.dir}/metadata.emma"
+                   merge="true"
+                   mode="overwrite">
+                <filter excludes="*Test*" />
+                <filter excludes="org.junit.*" />
+            </instr>
+        </emma>
+    </target>
+
+
+    <!-- Run the full test suite against multiple JVMs and server configs, collecting coverage data. -->
+    <target name="test-coverage-multijvm"
+            description="Runs the full test suite against multiple JVMs and server configs, collecting coverage data."
+            depends="-emma-instrument">
+        <array8 arrayproperty="com.mysql.jdbc.testsuite.jvm" outputproperty="jvm.value" indexproperty="jvm.index">
+            <array8 arrayproperty="com.mysql.jdbc.testsuite.url" outputproperty="url.value" indexproperty="url.index">
+                <local name="test.run" />
+                <condition property="test.run">
+                    <and>
+                        <isset property="jvm.value" />
+                        <isset property="url.value" />
+                    </and>
+                </condition>
+                <antcall target="-test-multijvm-iteration">
+                    <param name="jvm.value" value="${jvm.value}" />
+                    <param name="url.value" value="${url.value}" />
+                    <param name="url.index" value="${url.index}" />
+                    <param name="test.mode" value="testsuite" />
+                    <param name="test.target" value="test-coverage" />
+                    <param name="test.run" value="${test.run}" />
+                </antcall>
+            </array8>
+        </array8>
+    </target>
+
+
+    <!-- Run the full test suite against one JVMs and one server config, collecting coverage data. -->
+    <target name="test-coverage"
+            description="Runs the full test suite against one JVMs and one server config, collecting coverage data."
+            depends="-testsuite-url-check, -testsuite-jvm-check, -set-test-result-prefix, -emma-instrument">
+        <property name="junit.unitregress.results" value="${junit.results}/${test.result.prefix}/unitregress" />
+
+        <mkdir dir="${junit.unitregress.results}/report" />
+
+        <echo>Running tests against '${com.mysql.jdbc.testsuite.url.final}' with jvm '${com.mysql.jdbc3.testsuite.jvm.java}' while collecting coverage data</echo>
+
+        <junit printsummary="yes" fork="on" forkmode="once" jvm="${com.mysql.jdbc3.testsuite.jvm.java}">
+            <jvmarg value="-Xmx1024m" />
+            <jvmarg value="-Demma.coverage.out.file=${emma.coverage.dir}/coverage.emma" />
+            <jvmarg value="-Demma.coverage.out.merge=true" />
+
+            <syspropertyset refid="junit.system.properties" />
+            <sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url.final}" />
+
+            <classpath>
+                <fileset dir="${com.mysql.jdbc.extra.libs}">
+                    <include name="**/*.jar" />
+                </fileset>
+                <fileset dir="${buildDir}/${fullProdName}/lib">
+                    <include name="**/*.jar" />
+                </fileset>
+                <pathelement location="${buildDir}/${fullProdName}" />
+                <pathelement path="${java.class.path}" />
+                <pathelement location="${emma.dir}/emma.jar" />
+                <pathelement location="${emma.dir}/emma_ant.jar" />
+            </classpath>
+
+            <formatter type="xml" />
+
+            <batchtest fork="yes" todir="${junit.unitregress.results}">
+                <fileset dir="${buildDir}/${fullProdName}">
+                    <include name="**/*Test.java" />
+                    <exclude name="**/fabric/*.java" />
+                    <exclude name="**/perf/*.java" />
+                </fileset>
+            </batchtest>
+        </junit>
+
+        <junitreport todir="${junit.unitregress.results}/report">
+            <fileset dir="${junit.unitregress.results}">
+                <include name="**/TEST-*.xml" />
+            </fileset>
+            <report format="frames" todir="${junit.unitregress.results}/report" />
+        </junitreport>
+    </target>
+
+
+    <!-- Run compliance test suite against multiple JVMs and server configs, collecting coverage data. -->
+    <target name="test-coverage-compliance-multijvm"
+            description="Runs compliance test suite against multiple JVMs and server configs, collecting coverage data."
+            depends="-emma-instrument">
+        <array8 arrayproperty="com.mysql.jdbc.testsuite.jvm" outputproperty="jvm.value" indexproperty="jvm.index">
+            <array8 arrayproperty="com.mysql.jdbc.compliance.url" outputproperty="url.value" indexproperty="url.index">
+                <local name="test.run" />
+                <condition property="test.run">
+                    <and>
+                        <isset property="jvm.value" />
+                        <isset property="url.value" />
+                    </and>
+                </condition>
+                <antcall target="-test-multijvm-iteration">
+                    <param name="jvm.value" value="${jvm.value}" />
+                    <param name="url.value" value="${url.value}" />
+                    <param name="url.index" value="${url.index}" />
+                    <param name="test.mode" value="compliance" />
+                    <param name="test.target" value="test-coverage-compliance" />
+                    <param name="test.run" value="${test.run}" />
+                </antcall>
+            </array8>
+        </array8>
+    </target>
+
+
+    <!-- Run compliance test suite against one JVM and one server config, collecting coverage data. -->
+    <target name="test-coverage-compliance"
+            description="Runs compliance test suite against one JVM and one server config, collecting coverage data."
+            depends="-compliance-url-check, -testsuite-jvm-check, -set-test-result-prefix, -emma-instrument">
+        <property name="junit.compliance.results" value="${junit.results}/${test.result.prefix}/compliance" />
+
+        <mkdir dir="${junit.compliance.results}/report" />
+
+        <echo>Running compliance test suite against '${com.mysql.jdbc.compliance.url.final}' with jvm '${com.mysql.jdbc3.testsuite.jvm.java}' while collecting coverage data</echo>
+
+        <junit printsummary="yes" fork="on" forkmode="once" jvm="${com.mysql.jdbc3.testsuite.jvm.java}">
+            <jvmarg value="-Xmx1024m" />
+            <jvmarg value="-Demma.coverage.out.file=${emma.coverage.dir}/coverage.emma" />
+            <jvmarg value="-Demma.coverage.out.merge=true" />
+
+            <syspropertyset refid="junit.system.properties" />
+            <sysproperty key="com.mysql.jdbc.compliance.url" value="${com.mysql.jdbc.compliance.url.final}" />
+
+            <classpath>
+                <fileset dir="${com.mysql.jdbc.extra.libs}">
+                    <include name="**/*.jar" />
+                </fileset>
+                <fileset dir="${buildDir}/${fullProdName}/lib">
+                    <include name="**/*.jar" />
+                </fileset>
+                <pathelement location="${buildDir}/${fullProdName}" />
+                <pathelement path="${java.class.path}" />
+                <pathelement location="${jdbc.compliance.location}" />
+                <pathelement location="${emma.dir}/emma.jar" />
+                <pathelement location="${emma.dir}/emma_ant.jar" />
+            </classpath>
+
+            <formatter type="xml" />
+
+            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.BatchUpdateTest" />
+            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.ConnectionTest" />
+            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.DatabaseMetaDataTest" />
+            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.EscapeSyntaxTest" />
+            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.PreparedStatementTest" />
+            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.ResultSetMetadataTest" />
+            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.ResultSetTest" />
+            <test fork="yes" todir="${junit.compliance.results}" name="com.mysql.jdbc.compliance.tests.StatementTest" />
+        </junit>
+
+        <junitreport todir="${junit.compliance.results}/report">
+            <fileset dir="${junit.compliance.results}">
+                <include name="**/TEST-*.xml" />
+            </fileset>
+            <report format="frames" todir="${junit.compliance.results}/report" />
+        </junitreport>
+    </target>
+
+
+    <!-- ***************************** -->
+    <!-- ***** MACRO DEFINITIONS ***** -->
+    <!-- ***************************** -->
+
+
+    <!-- Executes actions for each element of array properties (properties ending with '.N') of length 8. -->
+    <macrodef name="array8">
+        <attribute name="arrayproperty" />
+        <attribute name="outputproperty" />
+        <attribute name="indexproperty" />
+        <element name="job" implicit="true" />
+        <sequential>
+            <array-job arrayproperty="@{arrayproperty}" outputproperty="@{outputproperty}" indexproperty="@{indexproperty}" indexvalue="1">
+                <job />
+            </array-job>
+            <array-job arrayproperty="@{arrayproperty}" outputproperty="@{outputproperty}" indexproperty="@{indexproperty}" indexvalue="2">
+                <job />
+            </array-job>
+            <array-job arrayproperty="@{arrayproperty}" outputproperty="@{outputproperty}" indexproperty="@{indexproperty}" indexvalue="3">
+                <job />
+            </array-job>
+            <array-job arrayproperty="@{arrayproperty}" outputproperty="@{outputproperty}" indexproperty="@{indexproperty}" indexvalue="4">
+                <job />
+            </array-job>
+            <array-job arrayproperty="@{arrayproperty}" outputproperty="@{outputproperty}" indexproperty="@{indexproperty}" indexvalue="5">
+                <job />
+            </array-job>
+            <array-job arrayproperty="@{arrayproperty}" outputproperty="@{outputproperty}" indexproperty="@{indexproperty}" indexvalue="6">
+                <job />
+            </array-job>
+            <array-job arrayproperty="@{arrayproperty}" outputproperty="@{outputproperty}" indexproperty="@{indexproperty}" indexvalue="7">
+                <job />
+            </array-job>
+            <array-job arrayproperty="@{arrayproperty}" outputproperty="@{outputproperty}" indexproperty="@{indexproperty}" indexvalue="8">
+                <job />
+            </array-job>
+        </sequential>
+    </macrodef>
+
+
+    <!-- Executes actions for array type macros, defined as elements nested in top level array macro calls. -->
+    <macrodef name="array-job">
+        <attribute name="arrayproperty" />
+        <attribute name="outputproperty" />
+        <attribute name="indexproperty" />
+        <attribute name="indexvalue" />
+        <element name="job" implicit="true" />
+        <sequential>
+            <local name="@{outputproperty}" />
+            <condition property="@{outputproperty}" value="${@{arrayproperty}.@{indexvalue}}">
+                <isset property="@{arrayproperty}.@{indexvalue}" />
+            </condition>
+            <local name="@{indexproperty}" />
+            <condition property="@{indexproperty}" value="@{indexvalue}" else="0">
+                <isset property="@{arrayproperty}.@{indexvalue}" />
+            </condition>
+            <job />
+        </sequential>
+    </macrodef>
+
+
+    <!-- Makes an output directory hierarchy based on MySQL server version, OS information and JVM version. -->
+    <macrodef name="make-output-hier">
+        <attribute name="jvm" />
+        <attribute name="jdbcUrl" />
+        <attribute name="jdbcUrlIter" />
+        <attribute name="junitOutput" />
+
+        <sequential>
+            <local name="jvm.java" />
+            <property name="jvm.java" value="@{jvm}/bin/java" />
+
+            <local name="jvm.version" />
+            <exec executable="${jvm.java}" outputproperty="jvm.version" failonerror="false" failifexecutionfails="false" resultproperty="jvmcheckexitstatus">
+                <arg value="-version" />
+            </exec>
+
+            <fail message="The provided JVM reference is invalid '@{jvm}'. Set the path to a valid JVM(s) (JRE or JDK) home in the properties 'com.mysql.jdbc.testsuite.jvm.[1..8]'.">
+                <condition>
+                    <not>
+                        <and>
+                            <equals arg1="${jvmcheckexitstatus}" arg2="0" />
+                            <matches string="${jvm.version}" pattern="^java version &quot;\d+\.\d+\.\d+_\d+&quot;.*$" casesensitive="true" multiline="true" />
+                        </and>
+                    </not>
+                </condition>
+            </fail>
+
+            <java fork="true" jvm="${jvm.java}" classname="com.mysql.jdbc.util.VersionFSHierarchyMaker">
+                <jvmarg value="-Xmx1024m" />
+                <jvmarg value="-Demma.coverage.out.file=${emma.coverage.dir}/coverage.emma" />
+                <jvmarg value="-Demma.coverage.out.merge=true" />
+
+                <sysproperty key="com.mysql.jdbc.testsuite.url" value="@{jdbcUrl}" />
+
+                <classpath>
+                    <fileset dir="${com.mysql.jdbc.extra.libs}">
+                        <include name="**/*.jar" />
+                    </fileset>
+                    <fileset dir="${buildDir}/${fullProdName}/lib">
+                        <include name="**/*.jar" />
+                    </fileset>
+                    <pathelement location="${buildDir}/${fullProdName}" />
+                    <pathelement path="${java.class.path}" />
+                    <pathelement location="${emma.dir}/emma.jar" />
+                    <pathelement location="${emma.dir}/emma_ant.jar" />
+                </classpath>
+
+                <arg line="@{junitOutput} @{junitOutput}/hier @{jdbcUrlIter}" />
+            </java>
+        </sequential>
+    </macrodef>
+
+
+    <!-- ********************************* -->
+    <!-- ***** FABRIC TESTS AND DEMO ***** -->
+    <!-- ********************************* -->
+
+
+    <!-- 'test' and 'demo' targets for Fabric intentionally don't depend on 'build'.
+         This allows building and testing code with the environmental JVM. -->
+
+    <!-- Test Fabric setup. -->
+    <target name="test-fabric-setup" description="Tests Fabric setup." depends="-extra-libs-check">
+        <java fork="on" classname="testsuite.fabric.SetupFabricTestsuite" dir="${buildDir}/${fullProdName}">
+            <sysproperty key="com.mysql.fabric.testsuite.username" value="${com.mysql.fabric.testsuite.username}" />
+            <sysproperty key="com.mysql.fabric.testsuite.password" value="${com.mysql.fabric.testsuite.password}" />
+            <sysproperty key="com.mysql.fabric.testsuite.global.host" value="${com.mysql.fabric.testsuite.global.host}" />
+            <sysproperty key="com.mysql.fabric.testsuite.global.port" value="${com.mysql.fabric.testsuite.global.port}" />
+        </java>
+    </target>
+
+
+    <!-- Run test suite for Fabric. -->
+    <target name="test-fabric" description="Runs the test suite for Fabric." depends="test-fabric-setup">
+        <junit printsummary="yes" fork="on" forkmode="once">
+            <sysproperty key="com.mysql.fabric.testsuite.hostname" value="${com.mysql.fabric.testsuite.hostname}" />
+            <sysproperty key="com.mysql.fabric.testsuite.port" value="${com.mysql.fabric.testsuite.port}" />
+            <sysproperty key="com.mysql.fabric.testsuite.fabricUsername" value="${com.mysql.fabric.testsuite.fabricUsername}" />
+            <sysproperty key="com.mysql.fabric.testsuite.fabricPassword" value="${com.mysql.fabric.testsuite.fabricPassword}" />
+            <sysproperty key="com.mysql.fabric.testsuite.username" value="${com.mysql.fabric.testsuite.username}" />
+            <sysproperty key="com.mysql.fabric.testsuite.password" value="${com.mysql.fabric.testsuite.password}" />
+            <sysproperty key="com.mysql.fabric.testsuite.database" value="${com.mysql.fabric.testsuite.database}" />
+            <sysproperty key="com.mysql.fabric.testsuite.global.host" value="${com.mysql.fabric.testsuite.global.host}" />
+            <sysproperty key="com.mysql.fabric.testsuite.global.port" value="${com.mysql.fabric.testsuite.global.port}" />
+            <sysproperty key="com.mysql.fabric.testsuite.shard1.host" value="${com.mysql.fabric.testsuite.shard1.host}" />
+            <sysproperty key="com.mysql.fabric.testsuite.shard1.port" value="${com.mysql.fabric.testsuite.shard1.port}" />
+            <sysproperty key="com.mysql.fabric.testsuite.shard2.host" value="${com.mysql.fabric.testsuite.shard2.host}" />
+            <sysproperty key="com.mysql.fabric.testsuite.shard2.port" value="${com.mysql.fabric.testsuite.shard2.port}" />
+
+            <classpath>
+                <fileset dir="${com.mysql.jdbc.extra.libs}/hibernate4">
+                    <include name="**/*.jar" />
+                </fileset>
+                <fileset dir="${buildDir}/${fullProdName}/lib">
+                    <include name="**/*.jar" />
+                </fileset>
+                <pathelement location="${buildDir}/${fullProdName}" />
+                <pathelement path="${java.class.path}" />
+            </classpath>
+
+            <formatter type="brief" />
+
+            <test if="test" name="${test}" />
+
+            <batchtest unless="test">
+                <fileset dir="${buildDir}/${fullProdName}">
+                    <include name="**/fabric/**/Test*.java" />
+                    <exclude name="**/fabric/**/TestHashSharding.java" />
+                    <exclude name="**/fabric/**/TestHABasics.java" />
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+
+    <!-- Launch a Fabric demo. -->
+    <target name="demo-fabric" description="Launches a Fabric demo." depends="demo-fabric-client1, demo-fabric-employees-jdbc" />
+
+
+    <!-- Launch a client component from the Fabric demo. -->
+    <target name="demo-fabric-client1" description="Launches a client component from the Fabric demo." depends="-extra-libs-check">
+        <java fork="on" classname="demo.fabric.Client1_Fabric" dir="${buildDir}/${fullProdName}">
+            <sysproperty key="com.mysql.fabric.testsuite.hostname" value="${com.mysql.fabric.testsuite.hostname}" />
+            <sysproperty key="com.mysql.fabric.testsuite.port" value="${com.mysql.fabric.testsuite.port}" />
+            <sysproperty key="com.mysql.fabric.testsuite.fabricUsername" value="${com.mysql.fabric.testsuite.fabricUsername}" />
+            <sysproperty key="com.mysql.fabric.testsuite.fabricPassword" value="${com.mysql.fabric.testsuite.fabricPassword}" />
+            <sysproperty key="com.mysql.fabric.testsuite.username" value="${com.mysql.fabric.testsuite.username}" />
+            <sysproperty key="com.mysql.fabric.testsuite.password" value="${com.mysql.fabric.testsuite.password}" />
+            <sysproperty key="com.mysql.fabric.testsuite.database" value="${com.mysql.fabric.testsuite.database}" />
+            <sysproperty key="com.mysql.fabric.testsuite.global.host" value="${com.mysql.fabric.testsuite.global.host}" />
+            <sysproperty key="com.mysql.fabric.testsuite.global.port" value="${com.mysql.fabric.testsuite.global.port}" />
+            <sysproperty key="com.mysql.fabric.testsuite.shard1.host" value="${com.mysql.fabric.testsuite.shard1.host}" />
+            <sysproperty key="com.mysql.fabric.testsuite.shard1.port" value="${com.mysql.fabric.testsuite.shard1.port}" />
+            <sysproperty key="com.mysql.fabric.testsuite.shard2.host" value="${com.mysql.fabric.testsuite.shard2.host}" />
+            <sysproperty key="com.mysql.fabric.testsuite.shard2.port" value="${com.mysql.fabric.testsuite.shard2.port}" />
+        </java>
+    </target>
+
+
+    <!-- Launch an employees component from the Fabric demo. -->
+    <target name="demo-fabric-employees-jdbc" description="Launches a employees component from the Fabric demo." depends="-extra-libs-check">
+        <java fork="on" classname="demo.fabric.EmployeesJdbc" dir="${buildDir}/${fullProdName}">
+            <sysproperty key="com.mysql.fabric.testsuite.hostname" value="${com.mysql.fabric.testsuite.hostname}" />
+            <sysproperty key="com.mysql.fabric.testsuite.port" value="${com.mysql.fabric.testsuite.port}" />
+            <sysproperty key="com.mysql.fabric.testsuite.fabricUsername" value="${com.mysql.fabric.testsuite.fabricUsername}" />
+            <sysproperty key="com.mysql.fabric.testsuite.fabricPassword" value="${com.mysql.fabric.testsuite.fabricPassword}" />
+            <sysproperty key="com.mysql.fabric.testsuite.username" value="${com.mysql.fabric.testsuite.username}" />
+            <sysproperty key="com.mysql.fabric.testsuite.password" value="${com.mysql.fabric.testsuite.password}" />
+            <sysproperty key="com.mysql.fabric.testsuite.database" value="${com.mysql.fabric.testsuite.database}" />
+            <sysproperty key="com.mysql.fabric.testsuite.global.host" value="${com.mysql.fabric.testsuite.global.host}" />
+            <sysproperty key="com.mysql.fabric.testsuite.global.port" value="${com.mysql.fabric.testsuite.global.port}" />
+            <sysproperty key="com.mysql.fabric.testsuite.shard1.host" value="${com.mysql.fabric.testsuite.shard1.host}" />
+            <sysproperty key="com.mysql.fabric.testsuite.shard1.port" value="${com.mysql.fabric.testsuite.shard1.port}" />
+            <sysproperty key="com.mysql.fabric.testsuite.shard2.host" value="${com.mysql.fabric.testsuite.shard2.host}" />
+            <sysproperty key="com.mysql.fabric.testsuite.shard2.port" value="${com.mysql.fabric.testsuite.shard2.port}" />
+        </java>
+    </target>
+
+
+    <!-- Launch a Hibernate component from the Fabric demo. -->
+    <target name="demo-fabric-hibernate" description="Launches a Hibernate component from the Fabric demo." depends="-extra-libs-check">
+        <java fork="on" classname="demo.fabric.HibernateFabric" dir="${buildDir}/${fullProdName}">
+            <sysproperty key="com.mysql.fabric.testsuite.hostname" value="${com.mysql.fabric.testsuite.hostname}" />
+            <sysproperty key="com.mysql.fabric.testsuite.port" value="${com.mysql.fabric.testsuite.port}" />
+            <sysproperty key="com.mysql.fabric.testsuite.fabricUsername" value="${com.mysql.fabric.testsuite.fabricUsername}" />
+            <sysproperty key="com.mysql.fabric.testsuite.fabricPassword" value="${com.mysql.fabric.testsuite.fabricPassword}" />
+            <sysproperty key="com.mysql.fabric.testsuite.username" value="${com.mysql.fabric.testsuite.username}" />
+            <sysproperty key="com.mysql.fabric.testsuite.password" value="${com.mysql.fabric.testsuite.password}" />
+            <sysproperty key="com.mysql.fabric.testsuite.database" value="${com.mysql.fabric.testsuite.database}" />
+            <sysproperty key="com.mysql.fabric.testsuite.global.host" value="${com.mysql.fabric.testsuite.global.host}" />
+            <sysproperty key="com.mysql.fabric.testsuite.global.port" value="${com.mysql.fabric.testsuite.global.port}" />
+            <sysproperty key="com.mysql.fabric.testsuite.shard1.host" value="${com.mysql.fabric.testsuite.shard1.host}" />
+            <sysproperty key="com.mysql.fabric.testsuite.shard1.port" value="${com.mysql.fabric.testsuite.shard1.port}" />
+            <sysproperty key="com.mysql.fabric.testsuite.shard2.host" value="${com.mysql.fabric.testsuite.shard2.host}" />
+            <sysproperty key="com.mysql.fabric.testsuite.shard2.port" value="${com.mysql.fabric.testsuite.shard2.port}" />
+
+            <classpath>
+                <fileset dir="${com.mysql.jdbc.extra.libs}/hibernate4">
+                    <include name="**/*.jar" />
+                </fileset>
+                <fileset dir="src/lib">
+                    <include name="**/*.jar" />
+                </fileset>
+                <dirset dir="${buildDir}/${fullProdName}" />
+            </classpath>
+        </java>
+    </target>
+</project>
