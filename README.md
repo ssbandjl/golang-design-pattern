@@ -12,9 +12,9 @@
 
 ## 项目简介
 
-Go 语言设计模式的实例代码 + 代码图解
+Golang的23种设计模式之代码示例+图解+设计模式资料
 
-项目地址:https://github.com/ssbandjl/golang-design-pattern
+项目地址: https://github.com/ssbandjl/golang-design-pattern
 
 ## 云原生
 
