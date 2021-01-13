@@ -1,4 +1,4 @@
-# Golang的23种设计模式之代码示例+图解+设计模式资料
+# Golang的23种设计模式之代码示例+图解+设计模式/原则资料
 
 [![Build Status](https://travis-ci.org/senghoo/golang-design-pattern.svg?branch=master)](https://travis-ci.org/senghoo/golang-design-pattern)
 
@@ -12,7 +12,7 @@
 
 ## 项目简介
 
-Golang的23种设计模式之代码示例+图解+设计模式资料
+Golang的23种设计模式之代码示例+图解+设计模式/原则等资料
 
 项目地址: https://github.com/ssbandjl/golang-design-pattern
 
@@ -30,7 +30,7 @@ Golang的23种设计模式之代码示例+图解+设计模式资料
 
 
 
-# 原则
+## 原则
 
 - [依赖倒置原则](./ref)
   + [程序员进阶指南-文档团队Golang最佳实践和CR案例集分享](./ref/程序员进阶指南-文档团队Golang最佳实践和CR案例集分享.md)
@@ -38,9 +38,9 @@ Golang的23种设计模式之代码示例+图解+设计模式资料
 
 
 
-# 23种设计模式
+## Golang的23种设计模式
 
-## 创建型模式
+### 创建型模式
 
 * [简单工厂模式（Simple Factory）](./00_simple_factory) 
 
@@ -66,7 +66,7 @@ Golang的23种设计模式之代码示例+图解+设计模式资料
 
   ![image-20210103164524348](./img/单例模式.png)
 
-## 结构型模式
+### 结构型模式
 
 * [外观模式（Facade）](./01_facade) 
 
@@ -96,7 +96,7 @@ Golang的23种设计模式之代码示例+图解+设计模式资料
 
   ![image-20210103164857565](./img/桥接模式.png)
 
-## 行为型模式
+### 行为型模式
 
 * [中介者模式（Mediator）](./08_mediator)
 
