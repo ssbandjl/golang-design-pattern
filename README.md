@@ -27,6 +27,8 @@ Golang的23种设计模式之代码示例+图解+设计模式/原则等资料
 - [廖雪峰](https://www.liaoxuefeng.com/wiki/1252599548343744/1281319417937953)
 - [图解设计模式](http://c.biancheng.net/view/1397.html)
 - [golang-design-patttern](https://github.com/senghoo/golang-design-pattern)
+- 设计
+  + [DDD领域驱动设计在互联网业务开发中的实践](https://tech.meituan.com/2017/12/22/ddd-in-practice.html)
 
 
 
